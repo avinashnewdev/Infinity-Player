@@ -14,6 +14,8 @@
 
 Infinity Player is a browser-based media player built as a single-page HTML application. It brings audio and video libraries, playlists, playback controls and a customizable glass-style interface together in one place.
 
+> **Copyright notice:** © 2026 Avinash Jadhav. All rights reserved. This repository is public for viewing and demonstration. No permission is granted to copy, modify, redistribute, rebrand, sublicense, or use the project commercially without the copyright owner's prior written permission, except for rights that GitHub's Terms of Service expressly grant. See [LICENSE](LICENSE).
+
 ## Quick start
 
 1. Open the **[Live Demo](https://avinashnewdev.github.io/Infinity-Player/)**.
@@ -60,6 +62,7 @@ Infinity-Player/
 ├── assets/
 │   └── infinity-player-logo.svg         # Project logo
 ├── index.html                           # Main player application
+├── LICENSE                              # Proprietary all-rights-reserved notice
 └── README.md                            # Project guide
 ```
 
@@ -75,6 +78,18 @@ Infinity-Player/
 **Current documented version: 1.0**
 
 This version label identifies the first public project release. It does not mean that every planned roadmap item is implemented or that every media codec is supported.
+
+## Copyright and permissions
+
+**© 2026 Avinash Jadhav. All rights reserved.**
+
+This is proprietary, closed-permission software. Unless you have prior written permission from the copyright owner, you may not copy, adapt, modify, translate, rebrand, publish, redistribute, sublicense, sell, commercially exploit, or create derivative works from this project or its source code. Do not remove or alter copyright, author, or attribution notices.
+
+The repository being public does **not** place the code in the public domain and does **not** grant an open-source license. Access through GitHub remains subject to [GitHub's Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service); those platform terms may permit viewing and forking public repositories on GitHub. This notice does not override rights expressly granted by those terms or applicable law.
+
+For permission or commercial licensing, contact the copyright owner through the GitHub profile: [avinashnewdev](https://github.com/avinashnewdev). No permission is granted merely by requesting it; wait for written approval.
+
+**Important:** A license notice cannot technically prevent people from viewing or copying code from a public repository. It states the legal permissions you are (and are not) granting. If you need to keep source code confidential, use a private repository and do not publish the source in the public website bundle.
 
 ## Author
 
