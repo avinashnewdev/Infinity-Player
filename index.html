@@ -4119,7 +4119,7 @@ window.InfinityOnlineBridge={
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
- playPlaylist(items){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[0],ids);return ids.length},
+ playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
  has(id){return !!T(id)},
 };
 async function load(){
