@@ -2609,6 +2609,35 @@ input.mp-drag{filter:brightness(1.15)}
 .pp-lyric{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 .pp-lyric.hide{opacity:0}
 </style>
+
+<style id="vlc-feature-tab-css">
+#v-vlc{padding:clamp(14px,2.5vw,28px);overflow-y:auto}
+.vlcf-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.vlcf-head h1{margin:0 0 5px}.vlcf-head p,.vlcf-card p{color:var(--tx2);line-height:1.55;margin:4px 0 0}
+.vlcf-mark{font-size:10px;letter-spacing:1.4px;font-weight:800;color:var(--ac);border:1px solid var(--bd);border-radius:999px;padding:7px 11px}
+.vlcf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.vlcf-card{min-width:0;padding:18px;border-radius:24px;border:1px solid var(--bd);background:color-mix(in srgb,var(--sf) 88%,transparent);box-shadow:0 12px 34px rgba(0,0,0,.12);backdrop-filter:blur(18px)}
+.vlcf-card h2{font-size:17px;margin:0;color:var(--tx)}.vlcf-card-head{margin-bottom:14px}
+.vlcf-actions,.vlcf-row{display:flex;gap:8px;align-items:center;margin:10px 0}
+.vlcf-row input,.vlcf-input{flex:1;min-width:0;width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--bd);background:var(--row);color:var(--tx);outline:none}
+.vlcf-row input:focus,.vlcf-input:focus{border-color:var(--ac)}
+.vlcf-btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--mint));color:#111318;font-weight:750;border:0;cursor:pointer;white-space:nowrap}
+.vlcf-btn.secondary{background:var(--row);color:var(--tx);border:1px solid var(--bd)}
+.vlcf-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;margin-top:10px}
+.vlcf-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--row)}
+.vlcf-item span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)}
+.vlcf-item small{color:var(--tx2)}.vlcf-status{font-size:12px;min-height:18px;margin-top:10px!important}
+#vlcf-media{display:none;width:100%;max-height:300px;margin-top:12px;background:#050505;border-radius:14px}
+#vlcf-media.visible{display:block}
+.vlcf-yt-frame{width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:14px;background:var(--row);margin-top:12px}
+.vlcf-yt-frame iframe{width:100%;height:100%;border:0}
+.vlcf-codec-line{display:flex;align-items:center;gap:10px;margin:18px 0 8px;color:var(--tx)}
+.vlcf-dot{width:10px;height:10px;border-radius:50%;background:#999;box-shadow:0 0 12px currentColor}
+.vlcf-dot.good{background:#36c98b;color:#36c98b}.vlcf-dot.bad{background:#e0a13c;color:#e0a13c}
+.vlcf-note{padding:12px;border-radius:12px;background:var(--row);font-size:12px}
+@media(max-width:760px){.vlcf-grid{grid-template-columns:1fr}.vlcf-head{align-items:flex-start}.vlcf-mark{display:none}.vlcf-card{padding:14px}}
+</style>
+
 </head><body data-v="home">
 <div id="abg"></div><canvas id="bg"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -2912,6 +2941,30 @@ input.mp-drag{filter:brightness(1.15)}
    <div class="srow"><span class="si"><svg class="i"><use href="#i-disc"/></svg></span><div class="sl"><b id="stor">…</b></div></div>
   </div>
  </section>
+
+<section class="view" id="v-vlc">
+ <div class="vlcf-head"><div><h1>VLC Features</h1><p>Extra network and codec tools — your Infinity Player layout stays unchanged.</p></div><span class="vlcf-mark">VLC TOOLKIT</span></div>
+ <div class="vlcf-grid">
+  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>Network Playlists</h2><p>Import M3U / M3U8 files or a public playlist URL.</p></div></div>
+   <div class="vlcf-actions"><label class="vlcf-btn" for="vlcf-files">Import M3U</label><input id="vlcf-files" type="file" accept=".m3u,.m3u8,.txt" hidden><button class="vlcf-btn secondary" id="vlcf-export">Export</button></div>
+   <div class="vlcf-row"><input id="vlcf-url" type="url" placeholder="https://example.com/playlist.m3u"><button class="vlcf-btn" id="vlcf-fetch">Import URL</button></div>
+   <input id="vlcf-search" class="vlcf-input" type="search" placeholder="Search channels…"><div id="vlcf-list" class="vlcf-list"></div><p id="vlcf-status" class="vlcf-status" role="status">Playlists are stored locally in this browser.</p>
+   <video id="vlcf-media" controls playsinline preload="metadata"></video>
+  </article>
+  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>YouTube Playlist</h2><p>Use the official YouTube playlist player. Playback follows YouTube's rules and embed availability.</p></div></div>
+   <div class="vlcf-row"><input id="vlcf-yt-url" type="url" placeholder="Paste YouTube / YouTube Music playlist URL"><button class="vlcf-btn" id="vlcf-yt-open">Open</button></div>
+   <div id="vlcf-yt-status" class="vlcf-status" role="status">No playlist loaded.</div><div id="vlcf-yt-frame" class="vlcf-yt-frame"></div>
+  </article>
+  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>HEVC / H.265 Compatibility</h2><p>Checks browser-reported native codec support; it does not install a decoder.</p></div></div>
+   <div class="vlcf-codec-line"><span id="vlcf-codec-state" class="vlcf-dot"></span><b id="vlcf-codec-title">Checking browser…</b></div><p id="vlcf-codec-detail" class="vlcf-status"></p><button class="vlcf-btn secondary" id="vlcf-codec-refresh">Check again</button>
+  </article>
+  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>Offline Codec Engine</h2><p>Reports whether a trusted native desktop host is connected.</p></div></div>
+   <div class="vlcf-codec-line"><span id="vlcf-engine-state" class="vlcf-dot"></span><b id="vlcf-engine-title">Checking engine…</b></div><p id="vlcf-engine-detail" class="vlcf-status"></p>
+   <p class="vlcf-note">Browser playback remains limited by browser and operating-system codecs. Full offline HEVC and reliable multi-track decoding require a correctly packaged native libVLC host.</p>
+  </article>
+ </div>
+</section>
+
 </main>
 <aside id="rp">
  <div class="lg pnl"><div class="lh"><b>Recent Played</b><button class="lnk" id="rpclr">Clear</button></div><div id="rprecent"></div></div>
@@ -6905,4 +6958,8 @@ au.addEventListener('timeupdate',function(){if(lrc.length&&!lrc.plain)lrcTick()}
   requestAnimationFrame(frame);
 })();
 </script>
+<script src="js/vlc/youtube-playlists.js" defer></script>
+<script src="js/vlc/video-codec-compat.js" defer></script>
+<script src="js/vlc/offline-codec-engine.js" defer></script>
+<script src="js/vlc/features-tab.js" defer></script>
 </body></html>
