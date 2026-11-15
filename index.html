@@ -5252,26 +5252,21 @@ async function disableAutoPiPForFS(){
   syncToolStates();
 }
 async function fs(){
-  const t=T(queue[i])||T(queue[0]);
-  if(t&&!t.video){
-    if(window.mpPoster){
-      if(window.mpPoster.isOpen)window.mpPoster.close();
-      else window.mpPoster.open();
+  const a=$('#art');if(!a)return;
+  try{
+    if(inFS()){
+      au.disablePictureInPicture=false;
+      if(a.classList.contains('pfs')){setPFS(false);return}
+      const exit=document.exitFullscreen||document.webkitExitFullscreen;
+      if(exit){await Promise.resolve(exit.call(document));}else setPFS(false);
+      return;
     }
-    return;
-  }
-  const a=$('#art');
-  if(inFS()){
-    au.disablePictureInPicture=false;
-    if(a.classList.contains('pfs')){setPFS(false);return}
-    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
-    return;
-  }
-  ensureTrack();
-  await disableAutoPiPForFS();
-  if(a.requestFullscreen)a.requestFullscreen().catch(()=>setPFS(true));
-  else if(a.webkitRequestFullscreen){try{a.webkitRequestFullscreen()}catch(e){setPFS(true)}}
-  else setPFS(true);
+    ensureTrack();
+    await disableAutoPiPForFS();
+    const request=a.requestFullscreen||a.webkitRequestFullscreen;
+    if(request){try{await Promise.resolve(request.call(a));}catch(err){setPFS(true);}}
+    else setPFS(true);
+  }catch(err){setPFS(!inFS());}
 }
 function ovShow(){
   ov.classList.remove('hide');clearTimeout(ovT);
