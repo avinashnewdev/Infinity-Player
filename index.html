@@ -1887,6 +1887,7 @@ main#main{position:relative}
   #ov .ob-menu3{width:32px!important;height:32px!important}
 }
 
+#app-install-btn{gap:7px;white-space:nowrap;min-height:38px}#app-install-btn:disabled{opacity:.75;cursor:default}@media(max-width:680px){#app-install-btn{font-size:11px;padding:8px 9px}}
 </style>
 <style id="mobile-pro">
 /* ===== Aurora Mobile Pro: touch-friendly mobile UI (final overrides) ===== */
@@ -2685,6 +2686,7 @@ input.mp-drag{filter:brightness(1.15)}
  <div id="topbar">
   <label class="lg sbar"><svg class="i"><use href="#i-search"/></svg><input id="gs" type="search" placeholder="Master Search" autocomplete="off"></label>
   <button class="lg tgl" id="thm" aria-label="Light / Dark theme" title="Toggle Light / Dark Mode"><span class="tgl-trail"></span><i class="knob"><span class="knob-glint"></span><span class="knob-glow"></span><svg class="i starI"><use href="#i-starburst"/></svg></i><svg class="i sunI"><use href="#i-sun"/></svg><svg class="i moonI"><use href="#i-moon"/></svg></button>
+  <button type="button" class="btn sm gl" id="app-install-btn" title="Install Infinity Player" aria-label="Install Infinity Player"><svg class="i"><use href="#i-dl"/></svg> Install App</button>
   <button class="lg prof-pill" id="prof-btn" title="Offline User Profile Login"><span class="prof-av" id="top-av">A</span><span id="top-uname">Avi</span></button>
   <button class="lg avt" data-go="settings" aria-label="Settings"><svg class="i"><use href="#i-sliders"/></svg></button>
  </div>
@@ -2875,6 +2877,7 @@ input.mp-drag{filter:brightness(1.15)}
    </div>
    <div class="srow"><span class="si"><svg class="i"><use href="#i-grid"/></svg></span><div class="sl"><b>Liquid glass effect</b><span class="mut">Reduced ya Solid se purane phone/PC par smooth chalega</span></div><select id="glass" aria-label="Glass effect"><option value="full">Full</option><option value="reduced">Reduced</option><option value="solid">Solid (no blur)</option></select></div>
    <div class="srow"><span class="si"><svg class="i"><use href="#i-eq"/></svg></span><div class="sl"><b>Motion & Wave Animation</b><span class="mut">Aurora background, pulse aur wavy progress</span></div><select id="mot"><option value="full">Full</option><option value="subtle">Subtle</option><option value="off">Off</option></select></div>
+   <div class="srow"><span class="si"><svg class="i"><use href="#i-vol"/></svg></span><div class="sl"><b>UI Click Sound</b><span class="mut">Buttons aur navigation par soft modern tap sound</span></div><select id="ui-sound" aria-label="UI click sound"><option value="on">On</option><option value="off">Off</option></select></div>
    <div class="srow"><span class="si"><svg class="i"><use href="#i-pip"/></svg></span><div class="sl"><b>Auto Picture-in-Picture Guard</b><span class="mut">Fullscreen dabane par Auto-PiP apne aap disable ho jayega taaki clash na ho</span></div><label class="tg"><input type="checkbox" id="autopip" checked aria-label="Auto PiP Guard"><i></i></label></div>
    <div class="srow" id="bg-row"><span class="si"><svg class="i"><use href="#i-cam"/></svg></span><div class="sl"><b>App background (Colour & Wallpaper)</b><span class="mut">Poore app ka background colour, gradient ya custom image apne hisaab se set karo</span></div><div class="swr" id="bg-swatches"></div>
     <div class="cp-studio" id="bg-studio" hidden>
@@ -4679,10 +4682,39 @@ renderHomePlaylists();rLib();rOffl();$$('.js-imp2').forEach(b=>b.onclick=()=>$('
 function rLib(){const k=libk,P=PL(k),fv=favs.map(T).filter(t=>t&&!!t.video==(k=='video')).length;
 $('#libl').innerHTML=`<div class="lit" data-lib="fav" data-k="${k}"><div class="th fvt">${I('heart','fl')}</div><div class="mi"><b>Liked ${k=='video'?'Videos':'Songs'}</b><span class="mut">Favourites · ${fv}</span></div></div>`+Object.keys(P).map(n=>{const L=P[n].map(T).filter(Boolean),cCov=plArt[k+':'+n];return `<div class="lit" data-lib="pl" data-k="${k}" data-n="${esc(n)}"><div class="th">${mos(L,hh(n),cCov)}</div><div class="mi"><b>${esc(n)}</b><span class="mut">Playlist · ${wn(L.length,k)}</span></div></div>`}).join('');renderFolderBars()}
 let dip=null;
-function rOffl(){const st=matchMedia('(display-mode: standalone)').matches,ready=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
-$('#offl').innerHTML=`<b>${I('check')} ${st?'App installed':ready?'Offline ready':'Offline mode'}</b><span class="mut" style="color:inherit;opacity:.85">${ready||st?'':''}</span>${dip?`<button class="btn wide" id="inst2" style="margin-top:6px">${I('dl')} App install karo</button>`:''}`;const b=$('#inst2');if(b)b.onclick=()=>{dip.prompt();dip=null;rOffl()}}
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;rOffl()});addEventListener('appinstalled',rOffl);
+const appIsInstalled=()=>matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: window-controls-overlay)').matches||navigator.standalone===true;
+function installHelp(){
+ const ua=navigator.userAgent||'';
+ if(/iPhone|iPad|iPod/i.test(ua))return 'iPhone / iPad: Safari mein Share button dabao, phir “Add to Home Screen” chuno.';
+ if(/Android/i.test(ua))return 'Android: Chrome menu (⋮) kholo aur “Install app” ya “Add to Home screen” chuno.';
+ if(/Edg\\//i.test(ua))return 'Microsoft Edge: Menu (…) → Apps → Install this site as an app chuno.';
+ return 'Chrome / desktop: address bar ke right side Install icon dabao, ya ⋮ menu → Cast, save and share → Install page as app chuno.';
+}
+async function installApp(){
+ if(appIsInstalled()){toast('Infinity Player pehle se installed hai');return}
+ if(dip){const promptEvent=dip;dip=null;try{await promptEvent.prompt();const choice=await promptEvent.userChoice;if(choice&&choice.outcome==='accepted')toast('Infinity Player install ho raha hai');else toast('Install cancel hua — browser menu se kabhi bhi install kar sakte ho')}catch(e){toast('Install prompt available nahi. '+installHelp())}rOffl();return}
+ toast(installHelp(),6500);
+}
+function rOffl(){
+ const st=appIsInstalled(),ready=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
+ const label=st?'App installed':ready?'Ready to install':'Install on this device';
+ $('#offl').innerHTML='<b>'+I(st?'check':'dl')+' '+label+'</b><span class="mut" style="color:inherit;opacity:.85">'+(st?'Infinity Player app mode is active.':ready?'Install for a standalone app window and home-screen icon.':'Use your browser’s install option to add Infinity Player to your device.')+'</span>'+(st?'':'<button class="btn wide" id="inst2" style="margin-top:9px">'+I('dl')+' Install Infinity Player</button>');
+ const b=$('#inst2');if(b)b.onclick=installApp;
+ const top=$('#app-install-btn');if(top){top.innerHTML=st?I('check')+' Installed':I('dl')+' Install App';top.disabled=st;top.title=st?'Infinity Player is installed':'Install Infinity Player on this device'}
+}
+$('#app-install-btn')?.addEventListener('click',installApp);
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;rOffl()});
+addEventListener('appinstalled',()=>{dip=null;rOffl();toast('Infinity Player successfully installed')});
 $('#rpclr').onclick=()=>{recent=[];S.set('recent',recent);rh()};
+/* ---------- Modern UI tap sound ---------- */
+let uiSoundCtx=null,uiSoundEnabled=S.get('uiSound',true)!==false;
+function playUiTap(){
+ if(!uiSoundEnabled)return;
+ try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!uiSoundCtx)uiSoundCtx=new AC();const c=uiSoundCtx;if(c.state==='suspended')c.resume();const now=c.currentTime;const osc=c.createOscillator(),gain=c.createGain();osc.type='sine';osc.frequency.setValueAtTime(720,now);osc.frequency.exponentialRampToValueAtTime(470,now+.055);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.026,now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+.075);osc.connect(gain);gain.connect(c.destination);osc.start(now);osc.stop(now+.08)}catch(_){}
+}
+function syncUiSoundSetting(){const el=$('#ui-sound');if(el){el.value=uiSoundEnabled?'on':'off';el.onchange=()=>{uiSoundEnabled=el.value==='on';S.set('uiSound',uiSoundEnabled);if(uiSoundEnabled)playUiTap();toast('UI click sound '+(uiSoundEnabled?'ON':'OFF'))}}}
+syncUiSoundSetting();
+document.addEventListener('click',e=>{const target=e.target.closest('button,[role="button"],.btn,.chip,.gcirc,.ib,.lit,.fcard,.vlcf-btn,[data-go]');if(!target||target.disabled||target.getAttribute('aria-disabled')==='true'||target.id==='ui-sound')return;playUiTap()},{capture:true});
 /* ---------- clicks ---------- */
 document.addEventListener('input',e=>{const q=e.target;if(q.classList.contains('q')){ss[q.dataset.k].q=q.value.toLowerCase();rl(q.dataset.k)}});
 function openDlg(k){$('#dn').value='';pendingDlgCover=null;$('#dcov-lbl').textContent='Set Cover';const r=$(`input[name=dk][value=${k||(cur=='video'?'video':libk)}]`);if(r)r.checked=true;$('#dlg').showModal();$('#dn').focus()}
@@ -5487,7 +5519,7 @@ $('#clrh').onclick=()=>{recent=[];favs=[];plays={};pos={};S.set('recent',recent)
 $('#delall').onclick=async()=>{await dbclear('songs');await dbclear('meta');location.reload()};
 function stor(){if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{$('#stor').textContent=`${(e.usage/1048576).toFixed(1)} MB use hua · ${(e.quota/1073741824).toFixed(1)} GB available`}).catch(()=>{$('#stor').textContent='Storage info available nahi'});else $('#stor').textContent='Storage info available nahi'}
 if('mediaSession' in navigator){const m=navigator.mediaSession;[['play',()=>{ctx.resume();au.play()}],['pause',()=>au.pause()],['previoustrack',prev],['nexttrack',()=>next()],['seekto',d=>{au.currentTime=d.seekTime}]].forEach(([a,f])=>{try{m.setActionHandler(a,f)}catch(e){}})}
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>setTimeout(rOffl,1200)).catch(()=>{}));
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').then(()=>setTimeout(rOffl,1200)).catch(()=>{}));
 /* ---------- nav + keys ---------- */
 const NAVS=[['home','Home','nhome'],['search','Search','nsearch'],['audio','Audio','naudio'],['video','Video','nvideo'],['player','Now Playing','nplay'],['eq','Equalizer','neq'],['settings','Settings','nset']],NAVP=[['home','Home','nhome'],['audio','Audio','naudio'],['player','Playing','nplay'],['video','Video','nvideo'],['settings','Settings','nset']];
 $('#snav').innerHTML='<i class="snav-lens"></i>'+NAVS.map(([v,l,ic])=>`<button data-v="${v}">${I(ic)}<span>${l}</span></button>`).join('');

@@ -1,4 +1,4 @@
-const CACHE='infinity-player-shell-v2';
+const CACHE='infinity-player-shell-v3';
 const CORE=['./','./index.html','./css/vlc-features.css','./js/vlc/features-tab.js','./js/vlc/youtube-playlists.js','./js/vlc/video-codec-compat.js','./js/vlc/offline-codec-engine.js','./assets/infinity-player-logo.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
