@@ -3235,6 +3235,8 @@ function applyCustomBG(){
 })();
 /* ---------- clean library (no bundled default demo songs) ---------- */
 let tracks=[];
+// Restore lightweight online media records so Recent/Resume can resolve them after reload.
+try{const savedOnline=S.get('onlineTracks',[]);if(Array.isArray(savedOnline))savedOnline.slice(0,500).forEach(x=>{if(!x||!x.id||!x.url||!/^https?:/i.test(x.url))return;if(!tracks.some(t=>t.id===x.id))tracks.push({id:x.id,title:x.title||'Online media',artist:x.artist||'Online',album:x.album||'Online',url:x.url,video:!!x.video,file:null,addedAt:x.addedAt||Date.now(),hue:x.hue||265,online:true})})}catch(e){console.warn('Online media restore failed',e)}
 // Clean any legacy demo IDs from saved storage so only user's own media is shown
 try{
   const demoIds=['d1','d2','d3','d4'];
@@ -4106,6 +4108,20 @@ function setVideoFitMode(mode,showMsg=true){
 
 function ensureTrack(){if(i<0&&queue.length){i=0;const t=T(queue[0]);if(t){au.src=t.url;setLrc(t);syncAudioTracks(t);upd()}}}
 function play(id,list){if(list)queue=list;i=queue.indexOf(id);if(i<0){queue.push(id);i=queue.length-1}load()}
+
+// Shared bridge: Online media enters the exact same queue, Now Playing, Recent and controls as local files.
+window.InfinityOnlineBridge={
+ add(item){
+  if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
+  const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  try{sched()}catch(e){} return t.id;
+ },
+ play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
+ playPlaylist(items){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[0],ids);return ids.length},
+ has(id){return !!T(id)},
+};
 async function load(){
   const t=T(queue[i]);if(!t)return;
   abortBgThumb();
