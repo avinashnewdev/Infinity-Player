@@ -5,7 +5,7 @@
  */
 (() => {
   'use strict';
-  const video = () => document.querySelector('#real-video-el, #net-video-el');
+  const video = () => document.querySelector('#vid, #real-video-el, #net-video-el, #au, #audio');
   const native = () => window.vlcNative || null;
   const engine = {
     getStatus() {
