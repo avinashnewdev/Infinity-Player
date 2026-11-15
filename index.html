@@ -4165,7 +4165,8 @@ window.InfinityOnlineBridge={
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
- playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},\n playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
+ playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
+ playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
  has(id){return !!T(id)},
 };
 async function load(){
