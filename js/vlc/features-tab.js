@@ -71,7 +71,15 @@
   $('vlcf-files')?.addEventListener('change',async e=>{for(const f of e.target.files){try{await addFile(f)}catch(err){status(err.message,true)}}e.target.value=''});
   $('vlcf-export')?.addEventListener('click',exportM3U);$('vlcf-play-all')?.addEventListener('click',()=>play(0));$('vlcf-fetch')?.addEventListener('click',addUrl);$('vlcf-search')?.addEventListener('input',render);$('vlcf-list')?.addEventListener('click',e=>{const p=e.target.closest('[data-vlcf-play]');if(p)play(Number(p.dataset.vlcfPlay))});
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;const s=$('vlcf-install-status');if(s)s.textContent='App is ready to install on this device.'});
-  $('vlcf-install-app')?.addEventListener('click',async()=>{const s=$('vlcf-install-status');if(installPrompt){installPrompt.prompt();const choice=await installPrompt.userChoice;s.textContent=choice.outcome==='accepted'?'Infinity Player installation started.':'Installation was dismissed.';installPrompt=null;return}if(window.matchMedia('(display-mode: standalone)').matches){s.textContent='Infinity Player is already installed on this device.';return}s.textContent=/iphone|ipad|ipod/i.test(navigator.userAgent)?'Safari: tap Share, then Add to Home Screen.':'Chrome / Edge: open the browser menu (⋮) and choose Install app or Install this site as an app.'});
+  $('vlcf-install-app')?.addEventListener('click',async()=>{
+   const statusEl=$('vlcf-install-status');
+   if(window.matchMedia('(display-mode: standalone)').matches||navigator.standalone){statusEl.textContent='Infinity Player is already installed on this device.';return}
+   if(installPrompt){
+    try{installPrompt.prompt();const choice=await installPrompt.userChoice;installPrompt=null;if(choice.outcome==='accepted'){statusEl.textContent='Infinity Player installation accepted.';return}statusEl.textContent='Install prompt dismissed. Starting web package download…'}catch(e){installPrompt=null}
+   }else statusEl.textContent='Install prompt is not available in this browser. Starting web package download…';
+   const a=document.createElement('a');a.href='https://codeload.github.com/avinashnewdev/Infinity-Player/zip/refs/heads/main';a.download='Infinity-Player-web.zip';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+   statusEl.textContent='Web app ZIP download started. Extract it and run through a local web server or hosting. This is not a native EXE/APK installer.';
+  });
   if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
   $('vlcf-yt-open')?.addEventListener('click',openYT);$('vlcf-codec-refresh')?.addEventListener('click',checkCodec);render();checkCodec();checkEngine()}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
