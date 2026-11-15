@@ -2613,7 +2613,8 @@ input.mp-drag{filter:brightness(1.15)}
 <link rel="stylesheet" href="css/vlc-features.css">
 
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>\n</head><body data-v="home">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
+</head><body data-v="home">
 <div id="abg"></div><canvas id="bg"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 3.8 20.5 11v8.2a1.3 1.3 0 0 1-1.3 1.3H15v-5.7H9v5.7H4.8a1.3 1.3 0 0 1-1.3-1.3z"/></symbol>
@@ -4109,6 +4110,51 @@ function setVideoFitMode(mode,showMsg=true){
 function ensureTrack(){if(i<0&&queue.length){i=0;const t=T(queue[0]);if(t){au.src=t.url;setLrc(t);syncAudioTracks(t);upd()}}}
 function play(id,list){if(list)queue=list;i=queue.indexOf(id);if(i<0){queue.push(id);i=queue.length-1}load()}
 
+let onlineHls=null,onlineYt=null,onlineYtTimer=null,onlineYtApiPromise=null;
+const currentOnlineTrack=()=>{const t=T(queue[i])||T(queue[0]);return t&&t.online?t:null};
+function stopOnlineAdapters(){
+ if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}
+ if(onlineYtTimer){clearInterval(onlineYtTimer);onlineYtTimer=null}
+ if(onlineYt){try{onlineYt.destroy()}catch(e){}onlineYt=null}
+ const box=document.getElementById('online-yt-frame');if(box)box.remove();
+ au.style.visibility='';
+}
+function ensureYouTubeApi(){
+ if(window.YT&&YT.Player)return Promise.resolve();
+ if(onlineYtApiPromise)return onlineYtApiPromise;
+ onlineYtApiPromise=new Promise((resolve,reject)=>{
+  const previous=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=()=>{try{previous&&previous()}catch(e){}resolve()};
+  const script=document.createElement('script');script.src='https://www.youtube.com/iframe_api';
+  script.onerror=()=>reject(Error('YouTube player API could not load.'));
+  document.head.appendChild(script);
+ });return onlineYtApiPromise;
+}
+function startOnlineYouTube(t){
+ stopOnlineAdapters();au.pause();au.removeAttribute('src');au.load();au.style.visibility='hidden';
+ const box=document.createElement('div');box.id='online-yt-frame';
+ box.style.cssText='position:absolute;inset:0;z-index:4;width:100%;height:100%;background:#000';
+ $('#art').appendChild(box);
+ ensureYouTubeApi().then(()=>{
+  if(T(queue[i])!==t)return;
+  onlineYt=new YT.Player(box,{width:'100%',height:'100%',playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin},events:{
+   onReady:e=>{e.target.setVolume(Math.round(au.volume*100));e.target.playVideo()},
+   onStateChange:e=>{
+    if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
+    if(e.data===YT.PlayerState.PLAYING){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent='YouTube · Playlist'}
+   }
+  }});
+  onlineYtTimer=setInterval(()=>{
+   if(!onlineYt||T(queue[i])!==t)return;
+   const d=onlineYt.getDuration()||0,c=onlineYt.getCurrentTime()||0;if(d<=0)return;
+   const p=c/d;
+   ['seek','bseek','oseek'].forEach(id=>{const el=document.getElementById(id);if(el&&!seeking)el.value=p*1000});
+   ['tcur','ocur','btc'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fm(c)});
+   ['bseek','oseek'].forEach(id=>document.getElementById(id)?.style.setProperty('--pr',(p*100)+'%'));
+   const bar=$('#mbar')?.firstElementChild;if(bar)bar.style.width=(p*100)+'%';
+  },500);
+ }).catch(e=>{au.style.visibility='';toast(e.message||'YouTube playlist unavailable',5000)});
+}
 // Shared bridge: Online media enters the exact same queue, Now Playing, Recent and controls as local files.
 window.InfinityOnlineBridge={
  add(item){
@@ -4124,6 +4170,8 @@ window.InfinityOnlineBridge={
 };
 async function load(){
   const t=T(queue[i]);if(!t)return;
+  stopOnlineAdapters();
+  if(t.youtubeId){startOnlineYouTube(t);if(cur!=='player')show('player');if(remember){recent=[t.id,...recent.filter(x=>x!=t.id)].slice(0,12);S.set('recent',recent)}setLrc(t);syncAudioTracks(t);syncFullscreenMediaList();upd();rh();return;}
   abortBgThumb();
   extAu.pause();extAu.removeAttribute('src');
   au.muted=false;
@@ -4165,12 +4213,21 @@ async function load(){
       }
     }
   }
-  au.src=playUrl;
+  if(t.hls){
+    au.removeAttribute('src');au.load();
+    if(au.canPlayType('application/vnd.apple.mpegurl'))au.src=playUrl;
+    else if(window.Hls&&Hls.isSupported()){
+      onlineHls=new Hls({enableWorker:true,lowLatencyMode:false});
+      onlineHls.loadSource(playUrl);onlineHls.attachMedia(au);
+      onlineHls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){toast('HLS stream error: '+(d.details||d.type),5000);stopOnlineAdapters()}});
+      onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>au.play().catch(()=>{}));
+    }else{toast('Is browser mein HLS playback supported nahi hai.',5000);return;}
+  }else au.src=playUrl;
   au.defaultPlaybackRate=au.playbackRate=curSpd;
   au.preservesPitch=pitchLock;
   ensureAudioCtx();
   if(t.video&&cur!='player')show('player');
-  au.play().catch(()=>{});
+  if(!t.hls||au.canPlayType('application/vnd.apple.mpegurl'))au.play().catch(()=>{});
   if(remember){recent=[t.id,...recent.filter(x=>x!=t.id)].slice(0,12);S.set('recent',recent)}
   setLrc(t);syncAudioTracks(t);syncFullscreenMediaList();upd();rh();
 }
@@ -4182,6 +4239,7 @@ function popBtnAnim(el){
 }
 function toggle(btnEl){
   if(btnEl)popBtnAnim(btnEl);
+  if(currentOnlineTrack()?.youtubeId&&onlineYt){if(onlineYt.getPlayerState()===1)onlineYt.pauseVideo();else onlineYt.playVideo();return;}
   if(i<0){if(queue.length)play(queue[0]);else toast('Pehle Add File ya Add Folder se gaana/video import karo');return}
   ensureAudioCtx();
   if(au.paused){au.play().catch(()=>{});if(extAu.src&&au.muted)extAu.play().catch(()=>{})}
@@ -4263,6 +4321,7 @@ function tryCaptureLiveVideoThumb(t){
   }catch(e){}
 }
 au.onloadeddata=()=>{tryCaptureLiveVideoThumb(T(queue[i]))};
+au.addEventListener('loadedmetadata',()=>{const t=T(queue[i]);if(t&&t.online&&t.kind==='auto'){t.video=au.videoWidth>0;upd();syncFullscreenMediaList()}});
 au.addEventListener("loadedmetadata",()=>{const t=T(queue[i]);if(t&&t.online&&t.kind==="auto"){t.video=au.videoWidth>0;upd();syncFullscreenMediaList();}});
 au.ontimeupdate=()=>{const d=au.duration||16,p=d?au.currentTime/d:0,pc=(p*100)+'%';const t=T(queue[i]);if(!seeking){$('#seek').value=p*1000;$('#bseek').value=p*1000;$('#oseek').value=p*1000}
 if(extAu.src&&!extAu.paused&&Math.abs(extAu.currentTime-au.currentTime)>0.3)extAu.currentTime=au.currentTime;
@@ -5530,7 +5589,7 @@ function loadProfileSession(newProfId,msg){
   ss.video={tab:'all',q:'',s:'title',open:null};
   // 2. Load strictly the newly logged-in user's isolated data
   tracks=allTracksPool.filter(t=>(t.profId||'p_avi')===activeProfId);
-  try{const online=S.get('onlineTracks',[]);if(Array.isArray(online))online.slice(0,500).forEach(x=>{if(x&&x.id&&x.url&&/^https?:/i.test(x.url)&&!tracks.some(t=>t.id===x.id))tracks.push({id:x.id,title:x.title||'Online media',artist:x.artist||'Online',album:x.album||'Online',url:x.url,video:!!x.video,file:null,addedAt:x.addedAt||Date.now(),hue:x.hue||265,online:true,profId:activeProfId})})}catch(e){console.warn('Profile online media restore failed',e)}
+  try{const online=S.get('onlineTracks',[]);if(Array.isArray(online))online.slice(0,500).forEach(x=>{if(x&&x.id&&x.url&&/^https?:/i.test(x.url)&&!tracks.some(t=>t.id===x.id))tracks.push({id:x.id,title:x.title||'Online media',artist:x.artist||'Online',album:x.album||'Online',url:x.url,video:!!x.video,kind:x.kind||'auto',hls:!!x.hls,youtubeId:x.youtubeId||null,file:null,addedAt:x.addedAt||Date.now(),hue:x.hue||265,online:true,profId:activeProfId})})}catch(e){console.warn('Profile online media restore failed',e)}
   favs=S.get('favs',[]);
   pls=S.get('pls',{});
   vpls=S.get('vpls',{});
