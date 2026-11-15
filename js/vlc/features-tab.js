@@ -1,4 +1,4 @@
-/* Infinity Player — isolated VLC feature tab. Keeps network media separate from the core queue. */
+/* Infinity Player — isolated Online tab. Keeps network media separate from the core queue. */
 (() => {
  'use strict';
  const $=id=>document.getElementById(id);
@@ -29,20 +29,38 @@
   const q=($('vlcf-search')?.value||'').toLowerCase();
   const list=$('vlcf-list');if(!list)return;
   const filtered=entries.map((x,i)=>({...x,i})).filter(x=>(x.name+' '+(x.group||'')).toLowerCase().includes(q));
-  list.innerHTML=filtered.length?filtered.map(x=>'<div class="vlcf-item"><span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||'Stream')+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+x.i+'">Play</button></div>').join(''):'<p class="vlcf-status">No channels yet. Import an M3U playlist to begin.</p>';
+  list.innerHTML=filtered.length?filtered.map(x=>'<div class="vlcf-item"><span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||'Stream')+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+x.i+'">Play</button><button class="vlcf-btn secondary" data-vlcf-download="'+x.i+'">Download</button></div>').join(''):'<p class="vlcf-status">No channels yet. Import an M3U playlist to begin.</p>';
  }
  async function addFile(file){const parsed=parseM3U(await file.text());entries=parsed;persist();render();status('Imported '+entries.length+' channels from '+file.name+'.')}
  async function addUrl(){const url=safeUrl($('vlcf-url').value);if(!url)return status('Enter a valid HTTP(S) URL.',true);const b=$('vlcf-fetch');b.disabled=true;status('Fetching playlist…');try{const r=await fetch(url,{credentials:'omit',redirect:'follow',signal:AbortSignal.timeout?AbortSignal.timeout(15000):undefined});if(!r.ok)throw Error('HTTP '+r.status);entries=parseM3U(await r.text());persist();render();status('Imported '+entries.length+' channels.')}catch(e){status('Import failed: '+e.message+'. The host must allow CORS; download the file and import it instead.',true)}finally{b.disabled=false}}
  function play(index){const item=entries[index],media=$('vlcf-media');if(!item||!media)return;media.onended=()=>{if(index+1<entries.length)play(index+1)};media.src=item.url;media.classList.add('visible');media.load();media.play().catch(()=>status('Stream loaded. Press Play if autoplay is blocked.'));status('Playing '+(index+1)+' of '+entries.length+': '+item.name)}
+ async function downloadEntry(index){
+  const item=entries[index];if(!item)return;
+  const name=(item.name||'online-media').replace(/[\\/:*?"<>|]+/g,'_').trim()||'online-media';
+  const ext=(new URL(item.url).pathname.match(/\\.([a-z0-9]{2,5})$/i)||[])[1]||'mp4';
+  status('Preparing download: '+name+'…');
+  try{
+   const response=await fetch(item.url,{mode:'cors',credentials:'omit'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const blob=await response.blob();
+   if(!blob.size)throw Error('Empty file');
+   const a=document.createElement('a'),objectUrl=URL.createObjectURL(blob);
+   a.href=objectUrl;a.download=name+'.'+ext;document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
+   status('Download started: '+name+'.'+ext);
+  }catch(err){
+   status('Direct download unavailable: server CORS / stream restrictions. Open the source URL or use a downloadable media file.',true);
+  }
+ }
  function exportM3U(){if(!entries.length)return status('No playlist to export.',true);const lines=['#EXTM3U'];entries.forEach(x=>{lines.push('#EXTINF:-1 group-title="'+String(x.group||'').replace(/["\r\n]/g,'')+'",'+String(x.name||'Channel').replace(/[\r\n]/g,' '));lines.push(x.url)});const a=document.createElement('a'),u=URL.createObjectURL(new Blob([lines.join('\n')],{type:'audio/x-mpegurl'}));a.href=u;a.download='infinity-network-playlist.m3u';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);status('Playlist exported.')}
  function checkCodec(){const state=$('vlcf-codec-state'),title=$('vlcf-codec-title'),detail=$('vlcf-codec-detail');if(!window.VLCCodecCompat){title.textContent='Codec checker unavailable';return}const r=window.VLCCodecCompat.inspect();state.className='vlcf-dot '+(r.supported?'good':'bad');title.textContent=r.supported?'HEVC / H.265 reported supported':'HEVC / H.265 not reported';detail.textContent=window.VLCCodecCompat.explain()+' Probe results: '+r.results.map(x=>x.support).join(', ')+'.'}
  function checkEngine(){const state=$('vlcf-engine-state'),title=$('vlcf-engine-title'),detail=$('vlcf-engine-detail');const r=window.VLCOfflineCodecEngine?.getStatus();if(!r){title.textContent='Adapter unavailable';return}state.className='vlcf-dot '+(r.available?'good':'bad');title.textContent=r.available?'Native engine connected': 'Browser-only playback';detail.textContent=r.available?(r.name+' · '+(r.codecs||[]).join(', ')):r.note}
  function openYT(){const raw=$('vlcf-yt-url').value,id=window.VLCYouTubePlaylist?.extractPlaylistId(raw);if(!id){$('vlcf-yt-status').textContent='Valid YouTube playlist URL nahi mila.';return}const frame=$('vlcf-yt-frame');frame.innerHTML='<iframe title="YouTube playlist" src="'+esc(window.VLCYouTubePlaylist.buildEmbedUrl(id,'youtube',0))+'" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';$('vlcf-yt-status').textContent='Official YouTube playlist embed loaded.'}
  function init(){
-  const nav=$('snav');if(nav&&!nav.querySelector('[data-v="vlc"]')){const b=document.createElement('button');b.type='button';b.dataset.v='vlc';b.innerHTML='<span aria-hidden="true">◈</span><span>VLC Features</span>';b.addEventListener('click',()=>window.show?.('vlc'));nav.appendChild(b)}
+  const nav=$('snav');if(nav&&!nav.querySelector('[data-v="vlc"]')){const b=document.createElement('button');b.type='button';b.dataset.v='vlc';b.innerHTML='<span aria-hidden="true">◈</span><span>Online</span>';b.addEventListener('click',()=>window.show?.('vlc'));nav.appendChild(b)}
   $('vlcf-files')?.addEventListener('change',async e=>{for(const f of e.target.files){try{await addFile(f)}catch(err){status(err.message,true)}}e.target.value=''});
   $('vlcf-export')?.addEventListener('click',exportM3U);$('vlcf-play-all')?.addEventListener('click',()=>play(0));$('vlcf-fetch')?.addEventListener('click',addUrl);$('vlcf-search')?.addEventListener('input',render);
-  $('vlcf-list')?.addEventListener('click',e=>{const b=e.target.closest('[data-vlcf-play]');if(b)play(Number(b.dataset.vlcfPlay))});
+  $('vlcf-list')?.addEventListener('click',e=>{const p=e.target.closest('[data-vlcf-play]'),d=e.target.closest('[data-vlcf-download]');if(p)play(Number(p.dataset.vlcfPlay));else if(d)downloadEntry(Number(d.dataset.vlcfDownload))});
   $('vlcf-yt-open')?.addEventListener('click',openYT);$('vlcf-codec-refresh')?.addEventListener('click',checkCodec);
   render();checkCodec();checkEngine();
  }
