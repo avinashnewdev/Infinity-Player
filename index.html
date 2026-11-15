@@ -2613,7 +2613,7 @@ input.mp-drag{filter:brightness(1.15)}
 <link rel="stylesheet" href="css/vlc-features.css">
 
 
-</head><body data-v="home">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>\n</head><body data-v="home">
 <div id="abg"></div><canvas id="bg"></canvas>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 11 12 3.8 20.5 11v8.2a1.3 1.3 0 0 1-1.3 1.3H15v-5.7H9v5.7H4.8a1.3 1.3 0 0 1-1.3-1.3z"/></symbol>
@@ -4114,12 +4114,12 @@ window.InfinityOnlineBridge={
  add(item){
   if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
   const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
-  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}
-  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,youtubeId:item.youtubeId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.youtubeId=item.youtubeId||t.youtubeId||null}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,youtubeId:t.youtubeId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
- playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
+ playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},\n playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
  has(id){return !!T(id)},
 };
 async function load(){
@@ -4187,10 +4187,10 @@ function toggle(btnEl){
   if(au.paused){au.play().catch(()=>{});if(extAu.src&&au.muted)extAu.play().catch(()=>{})}
   else{au.pause();extAu.pause()}
 }
-function next(auto){if(!queue.length)return;if(auto&&rep==2){au.currentTime=0;au.play();return}
+function next(auto){if(currentOnlineTrack()?.youtubeId&&onlineYt){onlineYt.nextVideo();return}if(!queue.length)return;if(auto&&rep==2){au.currentTime=0;au.play();return}
 let n=i+1;if(shuf&&queue.length>1){do n=Math.floor(Math.random()*queue.length);while(n==i)}
 if(n>=queue.length){if(rep==1||!auto)n=0;else{au.pause();au.currentTime=0;upd();return}}i=n;load()}
-function prev(){if(i<0&&queue.length){play(queue[0]);return}if(au.currentTime>3||i<=0){au.currentTime=0;if(i==0&&au.paused)load();return}i--;load()}
+function prev(){if(currentOnlineTrack()?.youtubeId&&onlineYt){onlineYt.previousVideo();return}if(i<0&&queue.length){play(queue[0]);return}if(au.currentTime>3||i<=0){au.currentTime=0;if(i==0&&au.paused)load();return}i--;load()}
 function setShuf(v){shuf=v;['#shuf','#bshuf'].forEach(s=>$(s).classList.toggle('act',shuf))}
 function setRep(v){rep=v;['#rep','#brep'].forEach(s=>{$(s).classList.toggle('act',rep>0);$(s).title=rep==2?'Repeat one':rep==1?'Repeat all':'Repeat off';$(s).style.opacity=rep==2?1:''})}
 const heartOn=t=>t&&favs.includes(t.id);
@@ -4268,7 +4268,7 @@ if(extAu.src&&!extAu.paused&&Math.abs(extAu.currentTime-au.currentTime)>0.3)extA
 ['#bseek','#oseek'].forEach(s=>$(s).style.setProperty('--pr',pc));$('#mbar i').style.width=pc;$('#tcur').textContent=$('#ocur').textContent=$('#btc').textContent=fm(au.currentTime);
 if(t){if(!cnt&&au.currentTime>Math.min(30,(d||60)*.5)){cnt=true;plays[t.id]=(plays[t.id]||0)+1;S.set('plays',plays)}
 if((t.video||d>900)&&Date.now()-lastSave>3000){lastSave=Date.now();pos[t.id]={t:au.currentTime,d};S.set('pos',pos)}}lrcTick();drawWave()};
-const doSeek=e=>{seeking=true;ensureTrack();const d=au.duration||16;au.currentTime=e.target.value/1000*d;if(extAu.src)extAu.currentTime=au.currentTime;drawWave();lrcTick()};
+const doSeek=e=>{seeking=true;ensureTrack();if(currentOnlineTrack()?.youtubeId&&onlineYt){const d=onlineYt.getDuration()||0;onlineYt.seekTo(e.target.value/1000*d,true);seeking=false;return}const d=au.duration||16;au.currentTime=e.target.value/1000*d;if(extAu.src)extAu.currentTime=au.currentTime;drawWave();lrcTick()};
 $('#seek').oninput=doSeek;$('#seek').onchange=()=>seeking=false;
 $('#bseek').oninput=doSeek;$('#bseek').onchange=()=>seeking=false;
 $('#ppl').onclick=$('#bppl').onclick=e=>{e.stopPropagation();toggle(e.currentTarget)};$('#nxt').onclick=$('#bnxt').onclick=e=>{e.stopPropagation();popBtnAnim(e.currentTarget);next()};$('#prev').onclick=$('#bprev').onclick=e=>{e.stopPropagation();popBtnAnim(e.currentTarget);prev()};
@@ -4288,7 +4288,7 @@ function syncMuteUI(){
 }
 function setVol(v){
   v=Math.max(0,Math.min(1,+v));
-  au.volume=v;extAu.volume=v;
+  au.volume=v;extAu.volume=v;if(onlineYt)onlineYt.setVolume(Math.round(v*100));
   if(v>0&&au.muted&&!extAu.src)au.muted=false;
   if($('#vol').value!=v)$('#vol').value=v;
   if($('#bvol').value!=v)$('#bvol').value=v;
