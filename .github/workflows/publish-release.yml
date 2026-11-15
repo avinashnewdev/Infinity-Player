@@ -29,8 +29,8 @@ jobs:
       - name: Validate version
         shell: bash
         run: |
-          VERSION="\${{ inputs.version }}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
             echo "Use a version such as 1.1.0 or 1.1.0-beta.1"
             exit 1
           fi
@@ -45,11 +45,11 @@ jobs:
 
       - name: Publish GitHub Release
         env:
-          GH_TOKEN: \${{ github.token }}
-          IS_PRERELEASE: \${{ inputs.prerelease }}
+          GH_TOKEN: ${{ github.token }}
+          IS_PRERELEASE: ${{ inputs.prerelease }}
         shell: bash
         run: |
-          FLAGS=(--title "Infinity Player $TAG" --generate-notes)
+          FLAGS=(--title "Infinity Player $TAG")
           if [[ "$IS_PRERELEASE" == "true" ]]; then FLAGS+=(--prerelease); fi
           gh release create "$TAG" "release-package/Infinity-Player-$TAG-web.zip" \
             --repo "$GITHUB_REPOSITORY" "\${FLAGS[@]}" \
