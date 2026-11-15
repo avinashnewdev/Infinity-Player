@@ -135,7 +135,8 @@ These are future targets, not included downloadable binaries:
 ## 🗞️ Releases
 
 - **Latest version:** see [GitHub Releases](https://github.com/avinashnewdev/Infinity-Player/releases).
-- Releases are intended to include a web/PWA source package and release notes.
+- **Publish a release:** open the [Publish Infinity Player Release workflow](https://github.com/avinashnewdev/Infinity-Player/actions/workflows/publish-release.yml), choose **Run workflow**, enter a version such as `1.1.0`, and start the run.
+- Releases include a web/PWA source package and release notes.
 - Native EXE/APK/iOS installers will only be listed after separate native builds are implemented and tested.
 
 ## 🛡️ License & permissions
