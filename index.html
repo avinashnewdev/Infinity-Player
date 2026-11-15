@@ -3236,7 +3236,7 @@ function applyCustomBG(){
 /* ---------- clean library (no bundled default demo songs) ---------- */
 let tracks=[];
 // Restore lightweight online media records so Recent/Resume can resolve them after reload.
-try{const savedOnline=S.get('onlineTracks',[]);if(Array.isArray(savedOnline))savedOnline.slice(0,500).forEach(x=>{if(!x||!x.id||!x.url||!/^https?:/i.test(x.url))return;if(!tracks.some(t=>t.id===x.id))tracks.push({id:x.id,title:x.title||'Online media',artist:x.artist||'Online',album:x.album||'Online',url:x.url,video:!!x.video,file:null,addedAt:x.addedAt||Date.now(),hue:x.hue||265,online:true})})}catch(e){console.warn('Online media restore failed',e)}
+try{const savedOnline=S.get('onlineTracks',[]);if(Array.isArray(savedOnline))savedOnline.slice(0,500).forEach(x=>{if(!x||!x.id||!x.url||!/^https?:/i.test(x.url))return;if(!tracks.some(t=>t.id===x.id))tracks.push({id:x.id,title:x.title||'Online media',artist:x.artist||'Online',album:x.album||'Online',url:x.url,video:!!x.video,kind:x.kind||"auto",hls:!!x.hls,youtubeId:x.youtubeId||null,file:null,addedAt:x.addedAt||Date.now(),hue:x.hue||265,online:true})})}catch(e){console.warn('Online media restore failed',e)}
 // Clean any legacy demo IDs from saved storage so only user's own media is shown
 try{
   const demoIds=['d1','d2','d3','d4'];
@@ -4263,6 +4263,7 @@ function tryCaptureLiveVideoThumb(t){
   }catch(e){}
 }
 au.onloadeddata=()=>{tryCaptureLiveVideoThumb(T(queue[i]))};
+au.addEventListener("loadedmetadata",()=>{const t=T(queue[i]);if(t&&t.online&&t.kind==="auto"){t.video=au.videoWidth>0;upd();syncFullscreenMediaList();}});
 au.ontimeupdate=()=>{const d=au.duration||16,p=d?au.currentTime/d:0,pc=(p*100)+'%';const t=T(queue[i]);if(!seeking){$('#seek').value=p*1000;$('#bseek').value=p*1000;$('#oseek').value=p*1000}
 if(extAu.src&&!extAu.paused&&Math.abs(extAu.currentTime-au.currentTime)>0.3)extAu.currentTime=au.currentTime;
 ['#bseek','#oseek'].forEach(s=>$(s).style.setProperty('--pr',pc));$('#mbar i').style.width=pc;$('#tcur').textContent=$('#ocur').textContent=$('#btc').textContent=fm(au.currentTime);
@@ -4294,7 +4295,7 @@ function setVol(v){
   if($('#bvol').value!=v)$('#bvol').value=v;
   syncMuteUI();
 }
-function toggleMute(){au.muted=!au.muted;syncMuteUI();toast(au.muted?'Audio Muted':'Audio Unmuted')}
+function toggleMute(){if(currentOnlineTrack()?.youtubeId&&onlineYt){const muted=onlineYt.isMuted();onlineYt[muted?"unMute":"mute"]();toast(muted?"Audio Unmuted":"Audio Muted");return}au.muted=!au.muted;syncMuteUI();toast(au.muted?"Audio Muted":"Audio Unmuted")}
 $('#vol').oninput=e=>setVol(+e.target.value);
 $('#bvol').oninput=e=>setVol(+e.target.value);
 $('#vmute').onclick=e=>{e.stopPropagation();toggleMute()};
