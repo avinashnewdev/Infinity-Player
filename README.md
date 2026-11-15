@@ -1,102 +1,156 @@
-# Infinity Player
-
 <p align="center">
-  <img src="assets/infinity-player-logo.svg" alt="Infinity Player logo" width="180">
+  <img src="assets/infinity-player-logo.svg" alt="Infinity Player logo" width="116">
 </p>
 
-<h1 align="center">Infinity Player</h1>
-<p align="center"><strong>Version 1.0 · Web-based audio & video player</strong></p>
+<h1 align="center">INFINITY PLAYER</h1>
+<p align="center"><strong>Your media. Your controls. One cinematic space.</strong></p>
 <p align="center">
-  <a href="https://avinashnewdev.github.io/Infinity-Player/"><strong>▶ Open Live Demo</strong></a>
-  ·
-  <a href="https://github.com/avinashnewdev/Infinity-Player"><strong>View Source Code</strong></a>
+  <a href="https://avinashnewdev.github.io/Infinity-Player/"><strong>▶ LAUNCH WEB APP</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/avinashnewdev/Infinity-Player/releases"><strong>GET THE LATEST RELEASE</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/avinashnewdev/Infinity-Player/issues"><strong>REPORT AN ISSUE</strong></a>
 </p>
 
-Infinity Player is a browser-based media player built as a single-page HTML application. It brings audio and video libraries, playlists, playback controls and a customizable glass-style interface together in one place.
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Web%20%2F%20PWA-6557d2">
+  <img alt="Release" src="https://img.shields.io/github/v/release/avinashnewdev/Infinity-Player?display_name=tag&color=1c9c89">
+  <img alt="License" src="https://img.shields.io/badge/license-All%20Rights%20Reserved-bb6b35">
+  <img alt="Status" src="https://img.shields.io/badge/status-Active%20development-3977b8">
+</p>
 
-> **Copyright notice:** © 2026 Avinash Jadhav. All rights reserved. This repository is public for viewing and demonstration. No permission is granted to copy, modify, redistribute, rebrand, sublicense, or use the project commercially without the copyright owner's prior written permission, except for rights that GitHub's Terms of Service expressly grant. See [LICENSE](LICENSE).
+---
 
-## Quick start
+**Infinity Player** is a browser-based audio and video player designed to bring your local media library and supported online streams into one customizable experience. It combines a cinematic interface, playback tools, playlists, profiles and a shared Now Playing workflow.
 
-1. Open the **[Live Demo](https://avinashnewdev.github.io/Infinity-Player/)**.
-2. Add or choose media using the player’s library controls.
-3. Select a track or video and use the playback bar for play/pause, seeking, volume and track navigation.
-4. Open **Settings** to explore appearance and playback options.
+<p align="center">
+  <img src="assets/marketing/infinity-player-preview.svg" alt="Infinity Player illustrative product preview showing the library, Now Playing and Online playlist panels" width="100%">
+</p>
+<p align="center"><sub>Illustrative product preview created with SVG — this is a design illustration, not a captured application screenshot.</sub></p>
 
-For local use, download `index.html` from this repository and open it in a modern browser. Some browser features and media formats may behave differently depending on the browser and operating system.
+## ✨ Why Infinity Player?
 
-## What is included in v1.0
+- **One place for your media** — browse audio and video in a unified player experience.
+- **Control the listening experience** — use Now Playing, playback navigation, seeking, volume and supported audio/video options.
+- **Make it yours** — customize the look with themes, accent colors, backgrounds and glass-style effects.
+- **Bring playlists along** — import supported M3U channel lists and play online streams through the main player queue.
+- **Pick up where you left off** — use Recent media and saved playback position where available.
 
-The following features are present in the current HTML project:
+## 🚀 Feature highlights
 
-- **Audio and video library** with separate library views.
-- **Search** and media browsing.
-- **Playlists** with drag-and-drop ordering and playlist management.
-- **Playback controls** including play/pause, previous/next, seeking and volume.
-- **Audio options** such as track selection, speed controls and equalizer presets/custom EQ.
-- **Video options** including subtitles/captions, audio-track selection, picture-in-picture controls where supported, and fit/fill/stretch modes.
-- **Zoom and edge stretch controls** with fine-grained adjustment controls.
-- **Now Playing** view, mini-player and fullscreen-oriented playback interface.
-- **Appearance settings** including light/dark theme, accent colours, glass effects and background customization.
-- **Profiles and favourites**, plus recent media and sleep timer controls.
-- **Hindi-first interface strings** and multilingual font support in the page styling.
+| Experience | What you can do |
+|---|---|
+| Local media | Add audio/video files and folders through the browser's file picker |
+| Now Playing | Shared playback surface for supported local and online media |
+| Online playlists | Import M3U playlists from a file or a CORS-accessible URL |
+| Queue controls | Play a selected channel, continue through the imported list, use Next/Previous |
+| Recent media | Keep a lightweight history of recently played items |
+| Audio tools | Equalizer presets/custom EQ, playback speed and supported audio options |
+| Video tools | Fit/fill/stretch, zoom, subtitles and supported audio-track selection |
+| Personalization | Profiles, favorites, themes, accent colors and background options |
+| Installable web app | PWA installation where the browser and hosting environment support it |
 
-> **Media compatibility note:** actual codec support is provided by the browser's media engine. Not every codec or container is guaranteed to play in every browser. Try a current version of Chrome, Edge or Firefox for the best compatibility.
+### Online playback, connected to the player
 
-## Roadmap — planned improvements
+Online M3U entries are routed into the core player queue rather than being played in a separate mini-player. This allows supported streams to use the existing Now Playing screen, queue navigation and Recent history.
 
-These are ideas for future releases, not promises that they are already available in v1.0:
+**Compatibility matters:** a stream still depends on its format, browser codec support, server CORS/range behavior, network availability and any provider restrictions. HLS/M3U8 playback is not guaranteed in every browser. YouTube playlists use the official embedded player and remain subject to YouTube's own playback and control rules.
 
-- Native Windows desktop app (EXE) with OS-level media integration.
-- Android APK and iOS app builds.
-- Broader codec support through a suitable native playback engine.
-- Improved accessibility, keyboard shortcuts and localization coverage.
-- More automated playback, device and browser compatibility testing.
-- Optional installer, update mechanism and release packages.
+## ▶ Get started
 
-## Project structure
+### Option 1 — Open the live web app
 
-```
-Infinity-Player/
-├── .github/workflows/deploy-pages.yml   # GitHub Pages deployment
+1. Visit the **[Infinity Player web app](https://avinashnewdev.github.io/Infinity-Player/)**.
+2. Add local media with the library's file/folder controls.
+3. To use an online playlist, open **Online**, import an M3U file or a playlist URL that allows browser access, then choose a channel.
+4. Use **Now Playing** for the main playback controls.
+
+### Option 2 — Install it as a web app (PWA)
+
+When supported by your browser:
+- **Chrome / Edge on desktop:** open the app and use the browser's Install app option (or the Online tab's install instructions).
+- **Android:** open the app in a supported browser and choose Install app / Add to Home screen.
+- **iPhone / iPad:** in Safari, use Share → Add to Home Screen.
+
+PWA installation is not the same as a native Windows EXE, Android APK or iOS App Store application.
+
+### Option 3 — Run from source
+
+1. Clone or download this repository.
+2. Serve the project from a local HTTP server (recommended for PWA/service-worker features).
+3. Open the local site in a current browser.
+
+For a quick local server with Python installed:
+
+\`\`\`bash
+python -m http.server 8000
+\`\`\`
+
+Then open \`http://localhost:8000\`.
+
+## 🧭 Project status & compatibility
+
+Infinity Player is currently delivered as a **web app / installable PWA**. The browser supplies the media engine, so actual playback compatibility varies by browser and device.
+
+- No promise of universal codec support: unsupported codecs may fail even when a file can be imported.
+- Some online playlist URLs cannot be fetched by a browser because the remote host blocks CORS.
+- Some network streams require authentication, special headers or DRM and may not work in this client.
+- Online playback, track switching and audio processing should be tested with the specific stream and browser.
+- YouTube embedded playback follows YouTube's own restrictions.
+
+## 🛣️ Roadmap
+
+These are future targets, not included downloadable binaries:
+- Native Windows desktop package (EXE)
+- Android APK and iOS application builds
+- A native playback backend for broader codec coverage
+- Automated cross-browser and device playback tests
+- More localization and accessibility improvements
+
+## 🧰 Technology
+
+- HTML, CSS and JavaScript
+- HTML5 media and browser playback APIs
+- Web Audio APIs for supported audio processing
+- Browser storage for preferences, profiles and lightweight history
+- GitHub Pages deployment and PWA manifest/service worker
+
+## 🗂️ Repository layout
+
+\`\`\`text
+.
+├── .github/workflows/       # Pages deployment and release automation
 ├── assets/
-│   └── infinity-player-logo.svg         # Project logo
-├── index.html                           # Main player application
-├── LICENSE                              # Proprietary all-rights-reserved notice
-└── README.md                            # Project guide
-```
+│   ├── infinity-player-logo.svg
+│   └── marketing/           # Product preview artwork
+├── css/
+├── js/vlc/                  # Online playlist and codec helpers
+├── index.html               # Main application
+├── manifest.webmanifest     # PWA metadata
+├── service-worker.js        # Offline shell caching
+├── LICENSE
+└── README.md
+\`\`\`
 
-## Technology
+## 🗞️ Releases
 
-- HTML5, CSS and JavaScript
-- Browser media playback APIs
-- Local browser storage for supported preferences and profile data
-- GitHub Pages for the public demo
+- **Latest version:** see [GitHub Releases](https://github.com/avinashnewdev/Infinity-Player/releases).
+- Releases are intended to include a web/PWA source package and release notes.
+- Native EXE/APK/iOS installers will only be listed after separate native builds are implemented and tested.
 
-## Version
-
-**Current documented version: 1.0**
-
-This version label identifies the first public project release. It does not mean that every planned roadmap item is implemented or that every media codec is supported.
-
-## Copyright and permissions
+## 🛡️ License & permissions
 
 **© 2026 Avinash Jadhav. All rights reserved.**
 
-This is proprietary, closed-permission software. Unless you have prior written permission from the copyright owner, you may not copy, adapt, modify, translate, rebrand, publish, redistribute, sublicense, sell, commercially exploit, or create derivative works from this project or its source code. Do not remove or alter copyright, author, or attribution notices.
+This repository is public for viewing and demonstration. It is not an open-source project and does not grant permission to copy, modify, rebrand, redistribute, sublicense or commercially exploit the software without prior written permission, except for rights GitHub's Terms of Service expressly grant. Read [LICENSE](LICENSE) before using the source.
 
-The repository being public does **not** place the code in the public domain and does **not** grant an open-source license. Access through GitHub remains subject to [GitHub's Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service); those platform terms may permit viewing and forking public repositories on GitHub. This notice does not override rights expressly granted by those terms or applicable law.
+A public repository cannot technically prevent copying. This notice states the permissions being granted; it is not code obfuscation or copy protection.
 
-For permission or commercial licensing, contact the copyright owner through the GitHub profile: [avinashnewdev](https://github.com/avinashnewdev). No permission is granted merely by requesting it; wait for written approval.
+## 🙌 Author
 
-**Important:** A license notice cannot technically prevent people from viewing or copying code from a public repository. It states the legal permissions you are (and are not) granting. If you need to keep source code confidential, use a private repository and do not publish the source in the public website bundle.
+**Avinash Jadhav** · [@avinashnewdev](https://github.com/avinashnewdev)
 
-## Author
-
-**Avinash Jadhav**
-
-## Links
-
-- **Live Demo:** https://avinashnewdev.github.io/Infinity-Player/
-- **Repository:** https://github.com/avinashnewdev/Infinity-Player
-- **Deployment status:** https://github.com/avinashnewdev/Infinity-Player/actions
+<p align="center">
+  <strong>INFINITY PLAYER</strong><br>
+  <sub>One player. Your whole media world.</sub>
+</p>
