@@ -4,7 +4,8 @@
  const $=id=>document.getElementById(id);
  const KEY='infinity.iptv.playlists.v2',YTKEY='infinity.youtube.saved.v1';
  let playlists=[],ytItems=[],selectedPlaylist=0,installPrompt=null;
- try{const old=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(old))playlists=old}catch(_){}\n try{if(!playlists.length){const legacy=JSON.parse(localStorage.getItem('infinity.vlc.network.playlists.v1')||'[]');if(Array.isArray(legacy)&&legacy.length)playlists=[{id:'iptv_legacy',name:'Imported M3U Playlist',entries:legacy}]}}catch(_){}
+ try{const old=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(old))playlists=old}catch(_){}
+ try{if(!playlists.length){const legacy=JSON.parse(localStorage.getItem('infinity.vlc.network.playlists.v1')||'[]');if(Array.isArray(legacy)&&legacy.length)playlists=[{id:'iptv_legacy',name:'Imported M3U Playlist',entries:legacy}]}}catch(_){}
  try{const old=JSON.parse(localStorage.getItem(YTKEY)||'[]');if(Array.isArray(old))ytItems=old}catch(_){}
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const safeUrl=(v,base)=>{try{const u=new URL(String(v).trim(),base||location.href);return ['http:','https:'].includes(u.protocol)?u.href:null}catch(_){return null}};
