@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+<title id="title">Infinity Player product preview illustration</title><desc id="desc">A dark glass-style media player concept with a navigation rail, Now Playing artwork, playback controls and an online playlist panel. Illustrative product preview, not an application screenshot.</desc>
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0a1020"/><stop offset=".52" stop-color="#17132d"/><stop offset="1" stop-color="#071b27"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff" stop-opacity=".13"/><stop offset="1" stop-color="#ffffff" stop-opacity=".035"/></linearGradient>
+ <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b5cf6"/><stop offset=".55" stop-color="#4f8cff"/><stop offset="1" stop-color="#35d6c2"/></linearGradient>
+ <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb36b"/><stop offset=".45" stop-color="#ed6c9b"/><stop offset="1" stop-color="#6c55d9"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="24"/></filter>
+ </defs>
+ <rect width="1200" height="720" rx="34" fill="url(#bg)"/>
+ <circle cx="180" cy="120" r="180" fill="#6e50e8" opacity=".19" filter="url(#shadow)"/><circle cx="1030" cy="610" r="200" fill="#1ab6b2" opacity=".14" filter="url(#shadow)"/>
+ <rect x="32" y="28" width="1136" height="664" rx="26" fill="#090d18" stroke="#ffffff" stroke-opacity=".15"/>
+ <rect x="32" y="28" width="1136" height="52" rx="26" fill="#ffffff" fill-opacity=".035"/>
+ <circle cx="61" cy="54" r="6" fill="#ff6b73"/><circle cx="82" cy="54" r="6" fill="#ffca62"/><circle cx="103" cy="54" r="6" fill="#55d69b"/>
+ <text x="600" y="60" fill="#aab5d1" font-family="Inter,Arial,sans-serif" font-size="13" text-anchor="middle" letter-spacing="2">INFINITY PLAYER · PRODUCT PREVIEW</text>
+ <rect x="50" y="98" width="202" height="574" rx="18" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".09"/>
+ <circle cx="84" cy="137" r="19" fill="url(#accent)"/><path d="M74 137c7-14 13 14 20 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+ <text x="114" y="143" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="700">INFINITY</text>
+ <text x="70" y="193" fill="#74809e" font-family="Inter,Arial,sans-serif" font-size="11" letter-spacing="2">YOUR LIBRARY</text>
+ <g font-family="Inter,Arial,sans-serif" font-size="15" fill="#c5cce0"><text x="91" y="235">Home</text><text x="91" y="282">Music</text><text x="91" y="329">Videos</text><text x="91" y="376">Playlists</text></g>
+ <g fill="none" stroke="#9da8c8" stroke-width="1.7" opacity=".85"><path d="M70 220h13v13H70zM70 267h13v13H70zM70 314h13v13H70zM70 361h13v13H70z"/></g>
+ <rect x="64" y="402" width="174" height="42" rx="12" fill="#ffffff" fill-opacity=".09" stroke="#9d8cff" stroke-opacity=".55"/><text x="91" y="429" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600">Online</text><circle cx="77" cy="423" r="4" fill="#63e0cf"/>
+ <text x="70" y="486" fill="#74809e" font-family="Inter,Arial,sans-serif" font-size="11" letter-spacing="2">PERSONALIZE</text><text x="91" y="526" fill="#c5cce0" font-family="Inter,Arial,sans-serif" font-size="14">Settings</text><path d="M70 512h13v13H70z" fill="none" stroke="#9da8c8" stroke-width="1.7"/>
+ <rect x="270" y="98" width="620" height="410" rx="20" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".11"/>
+ <text x="302" y="140" fill="#f8f9ff" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="700">Now Playing</text><text x="302" y="166" fill="#8d9ab8" font-family="Inter,Arial,sans-serif" font-size="13">Your music. Your videos. One player.</text>
+ <rect x="302" y="190" width="252" height="252" rx="20" fill="url(#cover)"/>
+ <circle cx="428" cy="316" r="86" fill="#16152c" fill-opacity=".38" stroke="#ffffff" stroke-opacity=".35" stroke-width="2"/><circle cx="428" cy="316" r="62" fill="none" stroke="#ffffff" stroke-opacity=".22"/><circle cx="428" cy="316" r="20" fill="#f8d7c7" fill-opacity=".85"/><circle cx="428" cy="316" r="6" fill="#4b3268"/>
+ <path d="M322 401c40-48 65-10 98-40s75-30 122 5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3"/>
+ <text x="582" y="224" fill="#8e9bb8" font-family="Inter,Arial,sans-serif" font-size="12" letter-spacing="2">PLAYING FROM YOUR LIBRARY</text>
+ <text x="582" y="270" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="700">Midnight Motion</text><text x="582" y="298" fill="#a8b4d0" font-family="Inter,Arial,sans-serif" font-size="15">Infinity Sessions · Audio</text>
+ <rect x="582" y="337" width="270" height="5" rx="3" fill="#ffffff" fill-opacity=".15"/><rect x="582" y="337" width="118" height="5" rx="3" fill="url(#accent)"/><circle cx="700" cy="339.5" r="6" fill="#fff"/>
+ <text x="582" y="363" fill="#8e9bb8" font-family="Inter,Arial,sans-serif" font-size="11">02:18</text><text x="852" y="363" fill="#8e9bb8" font-family="Inter,Arial,sans-serif" font-size="11" text-anchor="end">04:42</text>
+ <g fill="#dce4ff"><path d="M624 402l-10-8 10-8v6h10v4h-10z" opacity=".8"/><path d="M687 387l-20 14v-28z"/><path d="M710 387l20 14v-28z" opacity=".8"/></g><circle cx="677" cy="395" r="25" fill="url(#accent)"/><path d="M672 384v22l16-11z" fill="#fff"/>
+ <rect x="270" y="526" width="620" height="146" rx="20" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".1"/>
+ <text x="300" y="563" fill="#f8f9ff" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="700">Your sound, shaped your way</text><g font-family="Inter,Arial,sans-serif" font-size="12" fill="#aeb9d4"><text x="300" y="598">20-band EQ</text><text x="435" y="598">Audio controls</text><text x="590" y="598">Custom themes</text><text x="744" y="598">Recent media</text></g>
+ <g fill="url(#accent)"><rect x="300" y="615" width="82" height="5" rx="3"/><rect x="435" y="615" width="102" height="5" rx="3"/><rect x="590" y="615" width="105" height="5" rx="3"/><rect x="744" y="615" width="103" height="5" rx="3"/></g>
+ <rect x="908" y="98" width="242" height="574" rx="20" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".11"/>
+ <text x="934" y="140" fill="#f8f9ff" font-family="Inter,Arial,sans-serif" font-size="19" font-weight="700">Online library</text><text x="934" y="164" fill="#8e9bb8" font-family="Inter,Arial,sans-serif" font-size="12">Bring streams into your player</text>
+ <rect x="930" y="190" width="198" height="40" rx="10" fill="#0b1120" stroke="#ffffff" stroke-opacity=".14"/><text x="946" y="215" fill="#687795" font-family="Inter,Arial,sans-serif" font-size="12">Playlist URL…</text>
+ <rect x="930" y="244" width="198" height="40" rx="10" fill="url(#accent)"/><text x="1029" y="269" fill="#fff" font-family="Inter,Arial,sans-serif" font-size="13" text-anchor="middle" font-weight="700">Import M3U Playlist</text>
+ <text x="934" y="324" fill="#8e9bb8" font-family="Inter,Arial,sans-serif" font-size="11" letter-spacing="1.5">RECENT STREAMS</text>
+ <g><rect x="930" y="342" width="198" height="58" rx="12" fill="#ffffff" fill-opacity=".055"/><circle cx="954" cy="371" r="12" fill="#4e9be8"/><path d="M950 364v14l11-7z" fill="#fff"/><text x="976" y="368" fill="#f5f7ff" font-family="Inter,Arial,sans-serif" font-size="12">Live Channel</text><text x="976" y="385" fill="#7f8ba8" font-family="Inter,Arial,sans-serif" font-size="10">Online audio/video</text></g>
+ <g><rect x="930" y="411" width="198" height="58" rx="12" fill="#ffffff" fill-opacity=".055"/><circle cx="954" cy="440" r="12" fill="#9b70e8"/><path d="M950 433v14l11-7z" fill="#fff"/><text x="976" y="437" fill="#f5f7ff" font-family="Inter,Arial,sans-serif" font-size="12">Playlist Stream</text><text x="976" y="454" fill="#7f8ba8" font-family="Inter,Arial,sans-serif" font-size="10">M3U / M3U8 source</text></g>
+ <rect x="930" y="496" width="198" height="1" fill="#ffffff" fill-opacity=".12"/><text x="934" y="530" fill="#c8d2e9" font-family="Inter,Arial,sans-serif" font-size="12">One queue · shared controls</text><text x="934" y="554" fill="#7f8ba8" font-family="Inter,Arial,sans-serif" font-size="11">Recent · Next · Previous · Seek</text>
+ <rect x="930" y="594" width="198" height="48" rx="13" fill="#ffffff" fill-opacity=".06" stroke="#ffffff" stroke-opacity=".1"/><text x="1029" y="623" fill="#d9e2ff" font-family="Inter,Arial,sans-serif" font-size="12" text-anchor="middle">Illustrative preview</text>
+</svg>
