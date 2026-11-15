@@ -4140,14 +4140,17 @@ function startOnlineYouTube(t){
   onlineYt=new YT.Player(box,{width:'100%',height:'100%',playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin},events:{
    onReady:e=>{e.target.setVolume(Math.round(au.volume*100));e.target.playVideo()},
    onStateChange:e=>{
+    const playing=e.data===YT.PlayerState.PLAYING;
+    ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
-    if(e.data===YT.PlayerState.PLAYING){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent='YouTube · Playlist'}
+    if(playing){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent='YouTube · Playlist'}
    }
   }});
   onlineYtTimer=setInterval(()=>{
    if(!onlineYt||T(queue[i])!==t)return;
    const d=onlineYt.getDuration()||0,c=onlineYt.getCurrentTime()||0;if(d<=0)return;
    const p=c/d;
+   ['tdur','odur','btd'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fm(d)});
    ['seek','bseek','oseek'].forEach(id=>{const el=document.getElementById(id);if(el&&!seeking)el.value=p*1000});
    ['tcur','ocur','btc'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fm(c)});
    ['bseek','oseek'].forEach(id=>document.getElementById(id)?.style.setProperty('--pr',(p*100)+'%'));
