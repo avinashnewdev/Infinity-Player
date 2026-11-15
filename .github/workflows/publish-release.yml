@@ -1,0 +1,69 @@
+name: Publish Infinity Player Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (example: 1.1.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark this as a pre-release"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate version
+        shell: bash
+        run: |
+          VERSION="\${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Use a version such as 1.1.0 or 1.1.0-beta.1"
+            exit 1
+          fi
+          echo "TAG=v$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build web app package
+        shell: bash
+        run: |
+          mkdir -p release-package
+          git archive --format=zip --output="release-package/Infinity-Player-$TAG-web.zip" HEAD \
+            index.html assets css js manifest.webmanifest service-worker.js README.md LICENSE
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: \${{ github.token }}
+          IS_PRERELEASE: \${{ inputs.prerelease }}
+        shell: bash
+        run: |
+          FLAGS=(--title "Infinity Player $TAG" --generate-notes)
+          if [[ "$IS_PRERELEASE" == "true" ]]; then FLAGS+=(--prerelease); fi
+          gh release create "$TAG" "release-package/Infinity-Player-$TAG-web.zip" \
+            --repo "$GITHUB_REPOSITORY" "\${FLAGS[@]}" \
+            --notes "## Infinity Player $TAG
+
+          Your media. Your controls. One cinematic space.
+
+          ### Included
+          - Web application source package (HTML/CSS/JavaScript)
+          - PWA manifest and service worker
+          - Project documentation and license
+
+          ### Install
+          Open the [live web app](https://avinashnewdev.github.io/Infinity-Player/) in a supported browser. Use the browser's Install app / Add to Home Screen option where available.
+
+          ### Important
+          This is a web/PWA release. It does not contain native Windows EXE, Android APK or iOS App Store binaries. Media codec and online-stream compatibility depend on the browser and stream provider."
