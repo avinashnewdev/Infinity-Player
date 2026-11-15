@@ -2918,29 +2918,26 @@ input.mp-drag{filter:brightness(1.15)}
   </div>
  </section>
 
-<section class="view" id="v-vlc">
- <div class="vlcf-head"><div><h1>Online</h1><p>Extra network and codec tools — your Infinity Player layout stays unchanged.</p></div><span class="vlcf-mark">ONLINE</span></div>
+<section class="view" id="v-iptv">
+ <div class="vlcf-head"><div><h1>IPTV</h1><p>Import and manage your M3U / M3U8 channel playlists.</p></div><span class="vlcf-mark">IPTV</span></div>
  <div class="vlcf-grid">
-  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>Network Playlists</h2><p>Import M3U / M3U8 files or a public playlist URL.</p></div></div>
-   <div class="vlcf-actions"><label class="vlcf-btn" for="vlcf-files">Import M3U</label><input id="vlcf-files" type="file" accept=".m3u,.m3u8,.txt" hidden><button class="vlcf-btn secondary" id="vlcf-export">Export</button></div>
+  <article class="vlcf-card">
+   <div class="vlcf-card-head"><div><h2>M3U / M3U8 Playlists</h2><p>Import a playlist file or a hosted playlist URL. Play any channel in the main player.</p></div></div>
+   <div class="vlcf-actions"><label class="vlcf-btn" for="vlcf-files">Import M3U / M3U8</label><input id="vlcf-files" type="file" accept=".m3u,.m3u8,.txt" hidden><button class="vlcf-btn secondary" id="vlcf-export">Export selected</button></div>
    <div class="vlcf-row"><input id="vlcf-url" type="url" placeholder="https://example.com/playlist.m3u"><button class="vlcf-btn" id="vlcf-fetch">Import URL</button></div>
-   <input id="vlcf-search" class="vlcf-input" type="search" placeholder="Search channels…"><div id="vlcf-list" class="vlcf-list"></div><p id="vlcf-status" class="vlcf-status" role="status">Playlists are stored locally in this browser.</p>
-   <video id="vlcf-media" controls playsinline preload="metadata"></video>
+   <input id="vlcf-search" class="vlcf-input" type="search" placeholder="Search playlists and channels…">
+   <div id="vlcf-list" class="vlcf-list"></div><p id="vlcf-status" class="vlcf-status" role="status">Your IPTV playlists are stored in this browser.</p>
   </article>
-  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>YouTube Playlist</h2><p>Use the official YouTube playlist player. Playback follows YouTube's rules and embed availability.</p></div></div>
-   <div class="vlcf-row"><input id="vlcf-yt-url" type="url" placeholder="Paste YouTube / YouTube Music playlist URL"><button class="vlcf-btn" id="vlcf-yt-open">Open</button></div>
-   <div id="vlcf-yt-status" class="vlcf-status" role="status">No playlist loaded.</div><div id="vlcf-yt-frame" class="vlcf-yt-frame"></div>
-  </article>
-  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>Infinity Player App</h2><p>Install this player on your device for an app-like experience.</p></div></div>
-   <div class="vlcf-actions"><button class="vlcf-btn" id="vlcf-install-app">Download / Install App</button></div>
-   <p id="vlcf-install-status" class="vlcf-status" role="status">Install option will appear when this site is supported by your browser. On iPhone, use Share → Add to Home Screen.</p>
-  </article>
-  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>HEVC / H.265 Compatibility</h2><p>Checks browser-reported native codec support; it does not install a decoder.</p></div></div>
-   <div class="vlcf-codec-line"><span id="vlcf-codec-state" class="vlcf-dot"></span><b id="vlcf-codec-title">Checking browser…</b></div><p id="vlcf-codec-detail" class="vlcf-status"></p><button class="vlcf-btn secondary" id="vlcf-codec-refresh">Check again</button>
-  </article>
-  <article class="vlcf-card"><div class="vlcf-card-head"><div><h2>Offline Codec Engine</h2><p>Reports whether a trusted native desktop host is connected.</p></div></div>
-   <div class="vlcf-codec-line"><span id="vlcf-engine-state" class="vlcf-dot"></span><b id="vlcf-engine-title">Checking engine…</b></div><p id="vlcf-engine-detail" class="vlcf-status"></p>
-   <p class="vlcf-note">Browser playback remains limited by browser and operating-system codecs. Full offline HEVC and reliable multi-track decoding require a correctly packaged native libVLC host.</p>
+ </div>
+</section>
+<section class="view" id="v-online-video">
+ <div class="vlcf-head"><div><h1>Online Video</h1><p>Save YouTube videos and playlists, then play them through Infinity Player.</p></div><span class="vlcf-mark">ONLINE VIDEO</span></div>
+ <div class="vlcf-grid">
+  <article class="vlcf-card">
+   <div class="vlcf-card-head"><div><h2>YouTube Video / Playlist</h2><p>Paste a YouTube video, playlist, or YouTube Music playlist link.</p></div></div>
+   <div class="vlcf-row"><input id="vlcf-yt-url" type="url" placeholder="Paste YouTube video / playlist URL"><button class="vlcf-btn" id="vlcf-yt-open">Add & Play</button></div>
+   <div id="vlcf-yt-status" class="vlcf-status" role="status">No YouTube items saved yet.</div>
+   <div id="vlcf-yt-list" class="vlcf-list"></div>
   </article>
  </div>
 </section>
@@ -3781,8 +3778,13 @@ function syncAudioTracks(t){
   let curVal=(tk&&tk.activeAudVal)||'';
   let htmlGroups='';
   const trackOpts=[];
+  const hlsTracks=onlineHls&&onlineHls.audioTracks?onlineHls.audioTracks:[];
+  if(hlsTracks.length){
+    hlsTracks.forEach((tr,k)=>{const ln=langName(tr.lang)||tr.lang||'';const lbl=tr.name||(ln?('Track '+(k+1)+' ('+ln+')'):('HLS Audio '+(k+1)));trackOpts.push(['hls:'+k,lbl,curVal==='hls:'+k,'vol'])});
+    if(!curVal){curVal='hls:'+(onlineHls.audioTrack>=0?onlineHls.audioTrack:0);trackOpts.forEach(o=>o[2]=o[0]===curVal)}
+  }
   const at=au.audioTracks;
-  if(at&&at.length>0){
+  if(!trackOpts.length&&at&&at.length>0){
     for(let k=0;k<at.length;k++){
       const tr=at[k],ln=langName(tr.language)||tr.language||'';
       const lbl=tr.label||(ln?`Track ${k+1} (${ln})`:`Track ${k+1}`);
@@ -3836,7 +3838,11 @@ async function setAudioLang(val){
   if(val==='ext:load'){$('#afi').click();return}
   if(t)t.activeAudVal=val;
   if(val!=='ext:play'){extAu.pause();extAu.removeAttribute('src');au.muted=false}
-  if(val.startsWith('tr:')){
+  if(val.startsWith('hls:')&&onlineHls){
+    const idx=+val.slice(4);
+    if(onlineHls.audioTracks&&onlineHls.audioTracks[idx]){onlineHls.audioTrack=idx;toast('IPTV Audio Track '+(idx+1)+' selected')}
+    else toast('This IPTV stream has no selectable audio rendition.',5000);
+  }else if(val.startsWith('tr:')){
     const idx=+val.slice(3),at=au.audioTracks;
     if(at&&at.length){
       for(let k=0;k<at.length;k++)at[k].enabled=(k===idx);
@@ -3916,7 +3922,7 @@ if(vFitMode==='contain')vFitMode='fit';
 if(vFitMode==='cover')vFitMode='fill';
 const round1=n=>Math.round((+n||0)*10)/10;
 function applyVideoTransform(){
-  const a=$('#art'),v=$('#vid'),t=T(queue[i])||T(queue[0]),isVid=!!(t&&t.video);
+  const a=$('#art'),v=$('#vid'),ytFrame=$('#online-yt-frame'),t=T(queue[i])||T(queue[0]),isVid=!!(t&&t.video);
   if($('#fit-wrap'))$('#fit-wrap').style.display='none';
   if($('#ofit-wrap'))$('#ofit-wrap').style.display='none';
   if($('#fit')){$('#fit').hidden=!isVid;$('#fit').style.display=isVid?'inline-flex':'none'}
@@ -3934,6 +3940,7 @@ function applyVideoTransform(){
       v.style.removeProperty('--vsx');v.style.removeProperty('--vsy');
       v.style.removeProperty('--vtx');v.style.removeProperty('--vty');
     }
+    if(ytFrame)ytFrame.style.transform='';
     return;
   }
   const mode=vFitMode||'fit';
@@ -3977,6 +3984,11 @@ function applyVideoTransform(){
   v.style.setProperty('--vsy',sy.toFixed(4));
   v.style.setProperty('--vtx',tx.toFixed(2)+'%');
   v.style.setProperty('--vty',ty.toFixed(2)+'%');
+  if(ytFrame){
+    ytFrame.style.transformOrigin='center center';
+    ytFrame.style.transform='translate('+tx.toFixed(2)+'%,'+ty.toFixed(2)+'%) scale('+sx.toFixed(4)+','+sy.toFixed(4)+')';
+    ytFrame.style.width='100%';ytFrame.style.height='100%';
+  }
   if($('#vz-rng')){$('#vz-rng').value=vZoom;$('#vz-rng').style.setProperty('--pr',((vZoom-50)/250*100)+'%')}
   if($('#vz-val'))$('#vz-val').textContent=vZoom.toFixed(1)+'%';
   if($('#vz-num')&&document.activeElement!==$('#vz-num'))$('#vz-num').value=vZoom.toFixed(1);
@@ -4137,13 +4149,14 @@ function startOnlineYouTube(t){
  $('#art').appendChild(box);
  ensureYouTubeApi().then(()=>{
   if(T(queue[i])!==t)return;
-  onlineYt=new YT.Player(box,{width:'100%',height:'100%',playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin},events:{
+  const ytConfig=t.youtubeVideoId?{videoId:t.youtubeVideoId,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin}}:{playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin}};
+  onlineYt=new YT.Player(box,{width:'100%',height:'100%',...ytConfig,events:{
    onReady:e=>{e.target.setVolume(Math.round(au.volume*100));e.target.playVideo()},
    onStateChange:e=>{
     const playing=e.data===YT.PlayerState.PLAYING;
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
-    if(playing){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent='YouTube · Playlist'}
+    if(playing){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist'}
    }
   }});
   onlineYtTimer=setInterval(()=>{
@@ -4163,8 +4176,8 @@ window.InfinityOnlineBridge={
  add(item){
   if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
   const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
-  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,youtubeId:item.youtubeId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.youtubeId=item.youtubeId||t.youtubeId||null}
-  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,youtubeId:t.youtubeId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.youtubeId=item.youtubeId||t.youtubeId||null}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
@@ -4224,7 +4237,10 @@ async function load(){
       onlineHls=new Hls({enableWorker:true,lowLatencyMode:false});
       onlineHls.loadSource(playUrl);onlineHls.attachMedia(au);
       onlineHls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){toast('HLS stream error: '+(d.details||d.type),5000);stopOnlineAdapters()}});
-      onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>au.play().catch(()=>{}));
+      onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
+        if(onlineHls.audioTracks&&onlineHls.audioTracks.length){const def=onlineHls.audioTracks.findIndex(x=>x.default);onlineHls.audioTrack=def>=0?def:0;syncAudioTracks(t)}
+        au.play().catch(()=>{});
+      });
     }else{toast('Is browser mein HLS playback supported nahi hai.',5000);return;}
   }else au.src=playUrl;
   au.defaultPlaybackRate=au.playbackRate=curSpd;
@@ -5306,6 +5322,7 @@ function setSpeed(val){
   curSpd=+val||1;
   au.defaultPlaybackRate=au.playbackRate=curSpd;
   au.preservesPitch=true;
+  if(onlineYt){try{const rates=onlineYt.getAvailablePlaybackRates();onlineYt.setPlaybackRate(rates.reduce((a,b)=>Math.abs(b-curSpd)<Math.abs(a-curSpd)?b:a,rates[0]||1))}catch(e){}}
   $('#spd').value=String(curSpd);$('#ospd').value=String(curSpd);
   if(window.syncCustomSelects)syncCustomSelects(true);
   toast(`Playback speed: ${curSpd}×`);
@@ -5442,7 +5459,7 @@ function handleSubBtn(e){
 $('#cc').onclick=handleSubBtn;$('#cc').ondblclick=()=>$('#sfi').click();
 $('#occ').onclick=e=>{handleSubBtn(e);ovShow()};$('#occ').ondblclick=()=>$('#sfi').click();
 $('#omute').onclick=()=>{toggleMute();ovShow()};
-$('#oseek').oninput=e=>{seeking=true;ensureTrack();const d=au.duration||16;au.currentTime=e.target.value/1000*d;ovShow()};
+$('#oseek').oninput=e=>{seeking=true;ensureTrack();if(currentOnlineTrack()?.youtubeId&&onlineYt){const d=onlineYt.getDuration()||0;if(d)onlineYt.seekTo(e.target.value/1000*d,true)}else{const d=au.duration||16;au.currentTime=e.target.value/1000*d}ovShow()};
 $('#oseek').onchange=()=>seeking=false;
 $('#sfi').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
