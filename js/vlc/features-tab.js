@@ -30,7 +30,7 @@
   const q=($('vlcf-search')?.value||'').toLowerCase();
   const list=$('vlcf-list');if(!list)return;
   const filtered=entries.map((x,i)=>({...x,i})).filter(x=>(x.name+' '+(x.group||'')).toLowerCase().includes(q));
-  list.innerHTML=filtered.length?filtered.map(x=>'<div class="vlcf-item"><span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||'Stream')+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+x.i+'">Play</button><button class="vlcf-btn secondary" data-vlcf-download="'+x.i+'">Download</button></div>').join(''):'<p class="vlcf-status">No channels yet. Import an M3U playlist to begin.</p>';
+  list.innerHTML=filtered.length?filtered.map(x=>'<div class="vlcf-item"><span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||'Stream')+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+x.i+'">Play</button></div>').join(''):'<p class="vlcf-status">No channels yet. Import an M3U playlist to begin.</p>';
  }
  async function addFile(file){const parsed=parseM3U(await file.text());entries=parsed;persist();render();status('Imported '+entries.length+' channels from '+file.name+'.')}
  async function addUrl(){const url=safeUrl($('vlcf-url').value);if(!url)return status('Enter a valid HTTP(S) URL.',true);const b=$('vlcf-fetch');b.disabled=true;status('Fetching playlist…');try{const r=await fetch(url,{credentials:'omit',redirect:'follow',signal:AbortSignal.timeout?AbortSignal.timeout(15000):undefined});if(!r.ok)throw Error('HTTP '+r.status);entries=parseM3U(await r.text());persist();render();status('Imported '+entries.length+' channels.')}catch(e){status('Import failed: '+e.message+'. The host must allow CORS; download the file and import it instead.',true)}finally{b.disabled=false}}
