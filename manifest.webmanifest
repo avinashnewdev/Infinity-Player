@@ -10,6 +10,12 @@
   "background_color": "#0A0B10",
   "theme_color": "#0A0B10",
   "icons": [
-    { "src": "./assets/infinity-player-logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
-  ]
+    {
+      "src": "./assets/infinity-player-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "prefer_related_applications": false
 }
