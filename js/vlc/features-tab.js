@@ -17,7 +17,7 @@
    const variants=[];let pending=null;
    for(const line of lines){
     if(line.startsWith('#EXT-X-STREAM-INF:')){pending=line.slice(18);continue}
-    if(pending&&!line.startsWith('#')){const url=safeUrl(line,baseUrl);if(url){const bw=+(pending.match(/BANDWIDTH=(\d+)/i)||[])[1]||0;variants.push({name:'HLS Video'+(bw?' · '+Math.round(bw/1000)+' kbps':''),group:'HLS video',url,video:true,hls:true,kind:'video',bandwidth:bw})}pending=null}
+    if(pending&&!line.startsWith('#')){if(!baseUrl&&!/^https?:\\/\\//i.test(line))throw Error('Local HLS master playlist uses relative variants. Import its hosted .m3u8 URL instead.');const url=safeUrl(line,baseUrl);if(url){const bw=+(pending.match(/BANDWIDTH=(\d+)/i)||[])[1]||0;variants.push({name:'HLS Video'+(bw?' · '+Math.round(bw/1000)+' kbps':''),group:'HLS video',url,video:true,hls:true,kind:'video',bandwidth:bw})}pending=null}
    }
    if(variants.length)return variants.sort((a,b)=>b.bandwidth-a.bandwidth);
    const media=/#EXTINF:/i.test(text)||/#EXT-X-TARGETDURATION:/i.test(text);
