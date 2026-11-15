@@ -52,7 +52,7 @@ jobs:
           FLAGS=(--title "Infinity Player $TAG")
           if [[ "$IS_PRERELEASE" == "true" ]]; then FLAGS+=(--prerelease); fi
           gh release create "$TAG" "release-package/Infinity-Player-$TAG-web.zip" \
-            --repo "$GITHUB_REPOSITORY" "\${FLAGS[@]}" \
+            --repo "$GITHUB_REPOSITORY" "${FLAGS[@]}" \
             --notes "## Infinity Player $TAG
 
           Your media. Your controls. One cinematic space.
