@@ -4,29 +4,42 @@ on:
     branches: ["main", "fix/**"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
 jobs:
-  syntax:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Extract and validate inline JavaScript
+      - name: Extract and syntax-check inline JavaScript
         run: |
           python - <<'PY'
           import re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          for i, (attrs, body) in enumerate(re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)):
+          scripts = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
+          count = 0
+          for i, (attrs, body) in enumerate(scripts):
               if not re.search(r"\bsrc\s*=", attrs, re.I) and body.strip():
                   Path(f"/tmp/inline-{i}.js").write_text(body, encoding="utf-8")
+                  count += 1
+          print(f"Extracted {count} inline scripts.")
           PY
-          for file in js/vlc/*.js /tmp/inline-*.js; do node --check "$file"; done
-      - name: Validate manifest JSON
-        run: python -m json.tool manifest.webmanifest > /dev/null
-      - name: Check required new scripts are linked
+          set -e
+          for file in js/vlc/*.js /tmp/inline-*.js; do
+            [ -f "$file" ] || continue
+            node --check "$file"
+          done
+      - name: Validate manifest and required app assets
         run: |
+          python -m json.tool manifest.webmanifest > /dev/null
+          test -f index.html
+          test -f service-worker.js
+          test -f js/vlc/iptv-audio.js
+          test -f js/vlc/features-tab.js
           grep -q 'js/vlc/iptv-audio.js' index.html
           grep -q 'js/vlc/iptv-audio.js' service-worker.js
-          test -f scripts/download-app.ps1
+      - name: Run IPTV audio adapter regression tests
+        run: node --test tests/*.test.cjs
