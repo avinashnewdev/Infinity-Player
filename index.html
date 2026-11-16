@@ -4169,7 +4169,8 @@ function startOnlineYouTube(t){
     const playing=e.data===YT.PlayerState.PLAYING;
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
-    if(playing){syncYouTubeQualityControl();const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist';ovShow()}
+    if(playing){syncYouTubeQualityControl();const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist'}
+    ovShow();
    }
   }});
   onlineYtTimer=setInterval(()=>{
@@ -5309,7 +5310,7 @@ savePL(k);rl(k);rh();toast(`${nw} nayi playlist, ${ok} gaane mile${miss?`, ${mis
 /* ---------- Music + Video Unified Controls & Fullscreen Overlay ---------- */
 const ov=$('#ov');let ovT,sbT;let preferredYouTubeQuality='default';
 const ytQualityLabels={default:'Auto',tiny:'144p',small:'240p',medium:'360p',large:'480p',hd720:'720p',hd1080:'1080p',hd1440:'1440p',hd2160:'2160p',highres:'Highest'};
-function applyYouTubeQuality(player){const p=player||onlineYt;if(!p||typeof p.setPlaybackQuality!=='function')return;if(preferredYouTubeQuality!=='default'){try{p.setPlaybackQuality(preferredYouTubeQuality)}catch(e){}}}
+function applyYouTubeQuality(player){const p=player||onlineYt;if(!p||typeof p.setPlaybackQuality!=='function')return;try{p.setPlaybackQuality(preferredYouTubeQuality)}catch(e){}}
 function syncYouTubeQualityControl(){const wrap=$('#oyq-wrap'),sel=$('#oyq');if(!wrap||!sel)return;const active=!!(isOnlineYouTube()&&onlineYt);wrap.hidden=!active;if(!active)return;let levels=[];try{levels=onlineYt.getAvailableQualityLevels?onlineYt.getAvailableQualityLevels():[]}catch(e){}const allowed=['tiny','small','medium','large','hd720','hd1080','hd1440','hd2160','highres'];const values=['default',...allowed.filter(q=>levels.includes(q))];const current=preferredYouTubeQuality;sel.innerHTML=values.map(q=>'<option value="'+q+'">'+(q==='default'?'Auto':ytQualityLabels[q])+'</option>').join('');sel.value=values.includes(current)?current:'default';if(!values.includes(current))preferredYouTubeQuality='default';}
 if($('#oyq'))$('#oyq').addEventListener('change',e=>{preferredYouTubeQuality=e.target.value;applyYouTubeQuality();toast('YouTube quality request: '+(ytQualityLabels[preferredYouTubeQuality]||'Auto')+'. YouTube may override this setting.',3500);ovShow()});
 function isAnyMediaPlaying(){if(!au.paused&&!au.ended)return true;if(typeof extAu!=='undefined'&&extAu&&!extAu.paused&&!extAu.ended)return true;try{return !!(onlineYt&&onlineYt.getPlayerState&&onlineYt.getPlayerState()===1)}catch(e){return false}}
