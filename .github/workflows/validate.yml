@@ -1,0 +1,32 @@
+name: Validate Infinity Player
+on:
+  push:
+    branches: ["main", "fix/**"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Extract and validate inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          for i, (attrs, body) in enumerate(re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)):
+              if not re.search(r"\bsrc\s*=", attrs, re.I) and body.strip():
+                  Path(f"/tmp/inline-{i}.js").write_text(body, encoding="utf-8")
+          PY
+          for file in js/vlc/*.js /tmp/inline-*.js; do node --check "$file"; done
+      - name: Validate manifest JSON
+        run: python -m json.tool manifest.webmanifest > /dev/null
+      - name: Check required new scripts are linked
+        run: |
+          grep -q 'js/vlc/iptv-audio.js' index.html
+          grep -q 'js/vlc/iptv-audio.js' service-worker.js
+          test -f scripts/download-app.ps1

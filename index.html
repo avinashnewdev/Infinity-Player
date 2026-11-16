@@ -1887,7 +1887,7 @@ main#main{position:relative}
   #ov .ob-menu3{width:32px!important;height:32px!important}
 }
 
-#app-install-btn{gap:7px;white-space:nowrap;min-height:38px}#app-install-btn:disabled{opacity:.75;cursor:default}@media(max-width:680px){#app-install-btn{font-size:11px;padding:8px 9px}}
+
 </style>
 <style id="mobile-pro">
 /* ===== Aurora Mobile Pro: touch-friendly mobile UI (final overrides) ===== */
@@ -2686,9 +2686,7 @@ input.mp-drag{filter:brightness(1.15)}
  <div id="topbar">
   <label class="lg sbar"><svg class="i"><use href="#i-search"/></svg><input id="gs" type="search" placeholder="Master Search" autocomplete="off"></label>
   <button class="lg tgl" id="thm" aria-label="Light / Dark theme" title="Toggle Light / Dark Mode"><span class="tgl-trail"></span><i class="knob"><span class="knob-glint"></span><span class="knob-glow"></span><svg class="i starI"><use href="#i-starburst"/></svg></i><svg class="i sunI"><use href="#i-sun"/></svg><svg class="i moonI"><use href="#i-moon"/></svg></button>
-  <button type="button" class="btn sm gl" id="app-install-btn" title="Install Infinity Player" aria-label="Install Infinity Player"><svg class="i"><use href="#i-dl"/></svg> Install App</button>
   <button class="lg prof-pill" id="prof-btn" title="Offline User Profile Login"><span class="prof-av" id="top-av">A</span><span id="top-uname">Avi</span></button>
-  <button class="lg avt" data-go="settings" aria-label="Settings"><svg class="i"><use href="#i-sliders"/></svg></button>
  </div>
  <section class="view on" id="v-home">
   <h1 id="greet"></h1>
@@ -2732,7 +2730,7 @@ input.mp-drag{filter:brightness(1.15)}
       <div class="ovd-grid">
        <button type="button" class="ob ob-ico" id="omute" title="Mute / Unmute" aria-label="Mute"><svg class="i"><use href="#i-vol"/></svg></button>
        <select id="ospd" aria-label="Speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
-       <button type="button" class="ob ob-ico" id="occ" title="Subtitles / Captions" aria-label="Subtitles"><svg class="i"><use href="#i-cc"/></svg></button>
+       <span id="cc-slot" style="display:inline-flex"></span>
        <button type="button" class="ob ob-ico" id="ofit" title="Cycle Fit / Fill / Stretch" aria-label="Fit or Fill"><svg class="i"><use href="#i-fit"/></svg><span id="ofit-lbl" hidden>Fit</span></button>
        <button type="button" class="ob ob-ico" id="ovstretch-btn" title="Video Zoom & 4-Side Stretch" aria-label="Zoom and Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
        <button type="button" class="ob ob-ico" id="opip" title="Picture-in-Picture" aria-label="PiP"><svg class="i"><use href="#i-pip"/></svg></button>
@@ -3781,7 +3779,7 @@ function syncAudioTracks(t){
   let curVal=(tk&&tk.activeAudVal)||'';
   let htmlGroups='';
   const trackOpts=[];
-  const hlsTracks=onlineHls&&onlineHls.audioTracks?onlineHls.audioTracks:[];
+  const hlsTracks=window.InfinityIPTVAudio?.audioTracks(onlineHls)||(onlineHls&&onlineHls.audioTracks?onlineHls.audioTracks:[]);
   if(hlsTracks.length){
     hlsTracks.forEach((tr,k)=>{const ln=langName(tr.lang)||tr.lang||'';const lbl=tr.name||(ln?('Track '+(k+1)+' ('+ln+')'):('HLS Audio '+(k+1)));trackOpts.push(['hls:'+k,lbl,curVal==='hls:'+k,'vol'])});
     if(!curVal||!curVal.startsWith('hls:')){curVal='hls:'+(onlineHls.audioTrack>=0?onlineHls.audioTrack:0);trackOpts.forEach(o=>o[2]=o[0]===curVal)}
@@ -3843,7 +3841,7 @@ async function setAudioLang(val){
   if(val!=='ext:play'){extAu.pause();extAu.removeAttribute('src');au.muted=false}
   if(val.startsWith('hls:')&&onlineHls){
     const idx=+val.slice(4);
-    if(onlineHls.audioTracks&&onlineHls.audioTracks[idx]){onlineHls.audioTrack=idx;toast('IPTV Audio Track '+(idx+1)+' selected')}
+    if((window.InfinityIPTVAudio?.selectAudio(onlineHls,idx))||(onlineHls.audioTracks&&onlineHls.audioTracks[idx]&&(onlineHls.audioTrack=idx)>=0)){toast('IPTV Audio Track '+(idx+1)+' selected');if(t)t.activeAudVal='hls:'+idx}
     else toast('This IPTV stream has no selectable audio rendition.',5000);
   }else if(val.startsWith('tr:')){
     const idx=+val.slice(3),at=au.audioTracks;
@@ -4129,7 +4127,7 @@ let onlineHls=null,onlineYt=null,onlineYtTimer=null,onlineYtApiPromise=null;
 const currentOnlineTrack=()=>{const t=T(queue[i])||T(queue[0]);return t&&t.online?t:null};
 const isOnlineYouTube=()=>{const t=currentOnlineTrack();return !!(t&&(t.youtubeId||t.youtubeVideoId))};
 function stopOnlineAdapters(){
- if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}
+ if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}window.InfinityIPTVAudio?.clear();
  if(onlineYtTimer){clearInterval(onlineYtTimer);onlineYtTimer=null}
  if(onlineYt){try{onlineYt.destroy()}catch(e){}onlineYt=null}
  const box=document.getElementById('online-yt-frame');if(box)box.remove();
@@ -4180,14 +4178,14 @@ window.InfinityOnlineBridge={
  add(item){
   if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
   const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
-  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null}
-  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,art:item.art||null,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.art=item.art||t.art||null;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,art:t.art||null,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
  playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
  playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
- playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
+ playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",art:"https://i.ytimg.com/vi/"+encodeURIComponent(id)+"/hqdefault.jpg",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
  has(id){return !!T(id)},
 };
 async function load(){
@@ -4240,6 +4238,10 @@ async function load(){
     if(au.canPlayType('application/vnd.apple.mpegurl'))au.src=playUrl;
     else if(window.Hls&&Hls.isSupported()){
       onlineHls=new Hls({enableWorker:true,lowLatencyMode:false});
+      window.InfinityIPTVAudio?.bind(onlineHls,au);
+      onlineHls.on(Hls.Events.AUDIO_TRACKS_UPDATED,()=>syncAudioTracks(t));
+      onlineHls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>syncToolStates());
+      onlineHls.on(Hls.Events.AUDIO_TRACK_SWITCHED,(_,d)=>{if(d&&d.id!=null)t.activeAudVal='hls:'+d.id});
       onlineHls.loadSource(playUrl);onlineHls.attachMedia(au);
       onlineHls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){toast('HLS stream error: '+(d.details||d.type),5000);stopOnlineAdapters()}});
       onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
@@ -4313,8 +4315,8 @@ function upd(){
   syncToolStates();markCur();rq();drawWave();
 }
 function syncToolStates(){
-  const t=T(queue[i])||T(queue[0]),hasSub=!!(lrc.length||(au.textTracks&&au.textTracks.length));
-  ['#cc','#occ'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',subOn&&hasSub)});
+  const t=T(queue[i])||T(queue[0]),hasSub=!!(lrc.length||(au.textTracks&&au.textTracks.length)||(onlineHls&&onlineHls.subtitleTracks&&onlineHls.subtitleTracks.length)||isOnlineYouTube());
+  const ccBtn=$('#cc');if(ccBtn)ccBtn.classList.toggle('act',!!(subOn&&hasSub)||(onlineHls&&onlineHls.subtitleTrack>=0)||(isOnlineYouTube()&&currentOnlineTrack()?.youtubeCaptionOn));
   const inPip=!!(document.pictureInPictureElement||window.pipActive);
   ['#pip','#opip'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',inPip)});
 }
@@ -4700,9 +4702,7 @@ function rOffl(){
  const label=st?'App installed':ready?'Ready to install':'Install on this device';
  $('#offl').innerHTML='<b>'+I(st?'check':'dl')+' '+label+'</b><span class="mut" style="color:inherit;opacity:.85">'+(st?'Infinity Player app mode is active.':ready?'Install for a standalone app window and home-screen icon.':'Use your browser’s install option to add Infinity Player to your device.')+'</span>'+(st?'':'<button class="btn wide" id="inst2" style="margin-top:9px">'+I('dl')+' Install Infinity Player</button>');
  const b=$('#inst2');if(b)b.onclick=installApp;
- const top=$('#app-install-btn');if(top){top.innerHTML=st?I('check')+' Installed':I('dl')+' Install App';top.disabled=st;top.title=st?'Infinity Player is installed':'Install Infinity Player on this device'}
 }
-$('#app-install-btn')?.addEventListener('click',installApp);
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;rOffl()});
 addEventListener('appinstalled',()=>{dip=null;rOffl();toast('Infinity Player successfully installed')});
 $('#rpclr').onclick=()=>{recent=[];S.set('recent',recent);rh()};
@@ -5323,7 +5323,7 @@ function ovShow(){
   const vsOpen=$('#vstretch-panel')&&!$('#vstretch-panel').hidden;
   if(!au.paused&&!portal.classList.contains('open')&&!vsOpen)ovT=setTimeout(()=>ov.classList.add('hide'),4500);
 }
-['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{if(inFS())disableAutoPiPForFS();else au.disablePictureInPicture=false;ovShow();const t=T(queue[i])||T(queue[0]);$('#otitle').textContent=(t||{}).title||'Aurora Music';syncFullscreenMediaList();try{if(inFS()&&$('#art').classList.contains('isvid'))screen.orientation.lock('landscape').catch(()=>{});else screen.orientation.unlock()}catch(e){}}));
+['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{if(inFS())disableAutoPiPForFS();else au.disablePictureInPicture=false;syncCcButtonLocation();ovShow();const t=T(queue[i])||T(queue[0]);$('#otitle').textContent=(t||{}).title||'Aurora Music';syncFullscreenMediaList();try{if(inFS()&&$('#art').classList.contains('isvid'))screen.orientation.lock('landscape').catch(()=>{});else screen.orientation.unlock()}catch(e){}}));
 au.addEventListener('playing',ovShow);au.addEventListener('pause',ovShow);
 ['mousemove','pointermove','pointerdown','touchstart','click'].forEach(ev=>$('#art').addEventListener(ev,ovShow,{passive:true}));
 ov.onclick=e=>{
@@ -5379,6 +5379,10 @@ $('#fit').onclick=e=>{
 };
 $('#ofit').onclick=e=>{if(e)e.stopPropagation();$('#fit').click();ovShow()};
 $('#fsb').onclick=fs;
+// Keep one CC control: move the existing button into the fullscreen drawer when needed.
+const ccButton=$('#cc'),ccHome=ccButton&&ccButton.parentElement,ccHomeMarker=ccButton?document.createComment('cc-button-home'):null;
+if(ccButton&&ccHomeMarker)ccHome.insertBefore(ccHomeMarker,ccButton);
+function syncCcButtonLocation(){if(!ccButton)return;const slot=$('#cc-slot');if(inFS()&&slot){ccButton.className='ob ob-ico';slot.appendChild(ccButton)}else if(ccHomeMarker&&ccHomeMarker.parentNode){ccButton.className='tbtn tbtn-ico';ccHomeMarker.parentNode.insertBefore(ccButton,ccHomeMarker)}}
 // Item 7: Universal Picture-in-Picture (Works 100% for BOTH Video & Audio via Floating Glass PiP + Native OS PiP)
 let pipCv=null,pipV=null,pipTimer=null;
 function renderPipFrame(){
@@ -5480,18 +5484,43 @@ $('#opip').onclick=e=>{e.stopPropagation();togglePiP()};
   });
   hdr.addEventListener('pointerup',()=>{drag=false});
 })();
-function handleSubBtn(e){
+async function handleSubBtn(e){
   ensureTrack();
   const t=T(queue[i])||T(queue[0]);
-  if(e.shiftKey||(!lrc.length&&!(au.textTracks&&au.textTracks.length))){
-    $('#sfi').click();
-  }else{
-    subOn=!subOn;lrcTick();syncToolStates();
-    toast(subOn?'Subtitles / Captions: ON (Nayi file ke liye double-click karo)':'Subtitles / Captions: OFF');
+  if(e&&e.shiftKey){$('#sfi').click();return}
+  if(isOnlineYouTube()){
+    if(!onlineYt){toast('YouTube player is still loading. Try CC again in a moment.');return}
+    if(t&&t.youtubeCaptionOn){
+      try{onlineYt.unloadModule('captions');t.youtubeCaptionOn=false;toast('YouTube captions OFF')}
+      catch(err){toast('YouTube captions setting unavailable',4500)}
+    }else{
+      const lang=prompt('YouTube subtitle language code (example: en, hi):',t&&t.youtubeCaptionLanguage||'en');
+      if(lang===null)return;
+      if(!lang.trim()){try{onlineYt.unloadModule('captions');if(t)t.youtubeCaptionOn=false;toast('YouTube captions OFF')}catch(err){}return}
+      try{onlineYt.loadModule('captions');onlineYt.setOption('captions','track',{languageCode:lang.trim().toLowerCase()});if(t){t.youtubeCaptionLanguage=lang.trim().toLowerCase();t.youtubeCaptionOn=true}toast('YouTube captions: '+lang.trim())}
+      catch(err){toast('This video may not have that subtitle language.',5000)}
+    }
+    syncToolStates();return;
   }
+  const hlsSubs=window.InfinityIPTVAudio?.subtitleTracks(onlineHls)||(onlineHls&&onlineHls.subtitleTracks)||[];
+  if(hlsSubs.length&&onlineHls){
+    const current=Number.isInteger(onlineHls.subtitleTrack)?onlineHls.subtitleTrack:-1;
+    const next=current>=hlsSubs.length-1?-1:current+1;
+    window.InfinityIPTVAudio?.selectSubtitle(onlineHls,next);
+    toast(next<0?'IPTV subtitles OFF':'IPTV subtitles: '+(hlsSubs[next].name||hlsSubs[next].lang||('Track '+(next+1))));
+    syncToolStates();return;
+  }
+  const nativeTracks=au.textTracks?[...au.textTracks].filter(x=>x.kind==='subtitles'||x.kind==='captions'):[];
+  if(nativeTracks.length){
+    const current=nativeTracks.findIndex(x=>x.mode==='showing'),next=current>=nativeTracks.length-1?-1:current+1;
+    nativeTracks.forEach((track,k)=>track.mode=k===next?'showing':'disabled');
+    toast(next<0?'Subtitles OFF':'Subtitles: '+(nativeTracks[next].label||nativeTracks[next].language||('Track '+(next+1))));
+    syncToolStates();return;
+  }
+  if(lrc.length){subOn=!subOn;lrcTick();syncToolStates();toast(subOn?'Subtitles / Lyrics ON':'Subtitles / Lyrics OFF');return}
+  $('#sfi').click();
 }
 $('#cc').onclick=handleSubBtn;$('#cc').ondblclick=()=>$('#sfi').click();
-$('#occ').onclick=e=>{handleSubBtn(e);ovShow()};$('#occ').ondblclick=()=>$('#sfi').click();
 $('#omute').onclick=()=>{toggleMute();ovShow()};
 $('#oseek').oninput=e=>{seeking=true;ensureTrack();if(isOnlineYouTube()&&onlineYt){const d=onlineYt.getDuration()||0;if(d)onlineYt.seekTo(e.target.value/1000*d,true)}else{const d=au.duration||16;au.currentTime=e.target.value/1000*d}ovShow()};
 $('#oseek').onchange=()=>seeking=false;
@@ -6634,14 +6663,7 @@ var menuBtn=q('#pp-menu-btn'),drawer=q('#pp-drawer'),drawerClose=q('#pp-drawer-c
 
 var timer=null,curId=null,isOpen=false,pushed=false,isScrubbing=false;
 
-/* Header fullscreen button wire */
-var ph=$('.phead');
-if(ph&&!$('#mp-pos-btn')){
-  var b=document.createElement('button');b.type='button';b.id='mp-pos-btn';b.className='gcirc';
-  b.setAttribute('aria-label','Fullscreen');b.innerHTML='<svg class="i"><use href="#i-expand"/></svg>';
-  ph.appendChild(b);
-  b.addEventListener('click',open);
-}
+/* Duplicate floating fullscreen icon removed; #fsb is the only fullscreen button. */
 var artEl=$('#art');
 if(artEl)artEl.addEventListener('click',function(e){
   if(e.target.closest('#ov-drawer,#vstretch-panel,#csel-portal'))return;
@@ -7069,5 +7091,6 @@ au.addEventListener('timeupdate',function(){if(lrc.length&&!lrc.plain)lrcTick()}
 <script src="js/vlc/youtube-playlists.js" defer></script>
 <script src="js/vlc/video-codec-compat.js" defer></script>
 <script src="js/vlc/offline-codec-engine.js" defer></script>
+<script src="js/vlc/iptv-audio.js" defer></script>
 <script src="js/vlc/features-tab.js" defer></script>
 </body></html>

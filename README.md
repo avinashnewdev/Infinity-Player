@@ -62,7 +62,7 @@ Online M3U entries are routed into the core player queue rather than being playe
 
 1. Visit the **[Infinity Player web app](https://avinashnewdev.github.io/Infinity-Player/)**.
 2. Add local media with the library's file/folder controls.
-3. To use an online playlist, open **Online**, import an M3U file or a playlist URL that allows browser access, then choose a channel.
+3. To use an online playlist, open **IPTV**, import an M3U file or a hosted playlist URL, then choose a channel. Direct `.m3u8` stream URLs can be added without fetching the manifest first.
 4. Use **Now Playing** for the main playback controls.
 
 ### Option 2 — Install it as a web app (PWA)
@@ -155,3 +155,8 @@ A public repository cannot technically prevent copying. This notice states the p
   <strong>INFINITY PLAYER</strong><br>
   <sub>One player. Your whole media world.</sub>
 </p>
+
+
+## Download helper
+
+Windows PowerShell download script: [scripts/download-app.ps1](scripts/download-app.ps1). It downloads the latest published web/PWA ZIP when available, otherwise the latest source ZIP from `main`. It does not create a native EXE.

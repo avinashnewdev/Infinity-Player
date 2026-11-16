@@ -16,6 +16,8 @@
   text=text.replace(/^\uFEFF/,'');
   const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   if(isHls(text)){
+   // Keep the original master manifest so HLS.js can discover alternate audio/subtitle renditions.
+   if(baseUrl)return [{name:localName||'HLS Live TV',group:'HLS video',url:baseUrl,video:true,hls:true,kind:'video'}];
    const variants=[];let pending=null;
    for(const line of lines){if(line.startsWith('#EXT-X-STREAM-INF:')){pending=line.slice(18);continue}
     if(pending&&!line.startsWith('#')){if(!baseUrl&&!/^https?:\/\//i.test(line))throw Error('Local HLS master uses relative variants. Import its hosted .m3u8 URL.');const url=safeUrl(line,baseUrl);if(url){const bw=+(pending.match(/BANDWIDTH=(\d+)/i)||[])[1]||0;variants.push({name:'HLS Video'+(bw?' · '+Math.round(bw/1000)+' kbps':''),group:'HLS video',url,video:true,hls:true,kind:'video',bandwidth:bw})}pending=null}}
@@ -24,7 +26,7 @@
    throw Error('HLS manifest mein playable stream nahi mila.');
   }
   const out=[];let meta={};
-  for(const line of lines){if(line.startsWith('#EXTINF:')){const comma=line.indexOf(','),attrs=comma<0?line.slice(8):line.slice(8,comma);meta={name:(comma<0?'Untitled channel':line.slice(comma+1).trim())||'Untitled channel',group:(attrs.match(/group-title="([^"]*)"/i)||[])[1]||''}}
+  for(const line of lines){if(line.startsWith('#EXTINF:')){const comma=line.indexOf(','),attrs=comma<0?line.slice(8):line.slice(8,comma);meta={name:(comma<0?'Untitled channel':line.slice(comma+1).trim())||'Untitled channel',group:(attrs.match(/group-title="([^"]*)"/i)||[])[1]||'',logo:(attrs.match(/tvg-logo="([^"]*)"/i)||[])[1]||''}}
    else if(line.startsWith('#EXTGRP:'))meta.group=line.slice(8).trim();
    else if(!line.startsWith('#')){const url=safeUrl(line,baseUrl);if(url)out.push({...meta,url,kind:/\.(mp3|m4a|aac|ogg|opus|flac|wav)(?:$|[?#])/i.test(url)?'audio':'auto'});meta={};if(out.length>=10000)break}}
   if(!out.length)throw Error('No valid HTTP(S) media links found.');return out;
@@ -42,15 +44,42 @@
  function persistYT(){try{localStorage.setItem(YTKEY,JSON.stringify(ytItems))}catch(_){$('vlcf-yt-status').textContent='Browser storage is full.'}}
  function render(){
   const q=($('vlcf-search')?.value||'').toLowerCase(),list=$('vlcf-list');if(!list)return;
-  list.innerHTML=playlists.length?playlists.map((pl,pi)=>{const channels=(pl.entries||[]).map((x,ci)=>({...x,ci})).filter(x=>(x.name+' '+(x.group||'')).toLowerCase().includes(q));return '<div class="vlcf-playlist"><div class="vlcf-playlist-head"><b>'+esc(pl.name)+'</b><span class="vlcf-playlist-actions"><button class="vlcf-btn secondary" data-vlcf-playall="'+pi+'">Play all</button><button class="vlcf-btn danger" data-vlcf-remove="'+pi+'">Remove playlist</button></span></div>'+ (channels.length?channels.map(x=>'<div class="vlcf-item"><span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||(x.kind==='video'?'Video':x.kind==='audio'?'Audio':'Auto'))+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+pi+':'+x.ci+'">Play</button></div>').join(''):'<p class="vlcf-status">No matching channels.</p>')+'</div>'}).join(''):'<p class="vlcf-status">No IPTV playlists saved. Import an M3U / M3U8 file to begin.</p>';
+  list.innerHTML=playlists.length?playlists.map((pl,pi)=>{
+   const channels=(pl.entries||[]).map((x,ci)=>({...x,ci})).filter(x=>(x.name+' '+(x.group||'')).toLowerCase().includes(q));
+   return '<div class="vlcf-playlist"><div class="vlcf-playlist-head"><b>'+esc(pl.name)+'</b><span class="vlcf-playlist-actions"><button class="vlcf-btn secondary" data-vlcf-playall="'+pi+'">Play all</button><button class="vlcf-btn danger" data-vlcf-remove="'+pi+'">Remove playlist</button></span></div>'+
+    (channels.length?channels.map(x=>'<div class="vlcf-item">'+(x.logo?'<img class="vlcf-thumb" src="'+esc(x.logo)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'<span class="vlcf-thumb vlcf-thumb-fallback">▣</span>')+'<span title="'+esc(x.name)+'">'+esc(x.name)+'</span><small>'+esc(x.group||(x.kind==='video'?'Video':x.kind==='audio'?'Audio':'Auto'))+'</small><button class="vlcf-btn secondary" data-vlcf-play="'+pi+':'+x.ci+'">Play</button></div>').join(''):'<p class="vlcf-status">No matching channels.</p>')+'</div>';
+  }).join(''):'<p class="vlcf-status">No IPTV playlists saved. Import an M3U / M3U8 file to begin.</p>';
  }
  async function addFile(file){const parsed=parseM3U(await file.text(),null,file.name.replace(/\.(m3u8?|txt)$/i,''));const items=await classify(parsed);playlists.push({id:'iptv_'+Date.now().toString(36),name:file.name.replace(/\.(m3u8?|txt)$/i,''),entries:items});selectedPlaylist=playlists.length-1;persist();render();status('Imported '+items.length+' channels from '+file.name+'.')}
- async function addUrl(){const url=safeUrl($('vlcf-url').value);if(!url)return status('Enter a valid HTTP(S) playlist URL.',true);const b=$('vlcf-fetch');b.disabled=true;status('Fetching IPTV playlist…');try{const r=await fetch(url,{credentials:'omit',redirect:'follow',signal:AbortSignal.timeout?AbortSignal.timeout(15000):undefined});if(!r.ok)throw Error('HTTP '+r.status);const items=await classify(parseM3U(await r.text(),r.url||url,'IPTV Playlist'));playlists.push({id:'iptv_'+Date.now().toString(36),name:new URL(url).pathname.split('/').pop()||'IPTV URL Playlist',entries:items});selectedPlaylist=playlists.length-1;persist();render();status('Imported '+items.length+' IPTV channels.')}catch(e){status('Import failed: '+e.message+'. Host must allow CORS; download the M3U file and import it instead.',true)}finally{b.disabled=false}}
- function play(pi,ci){const pl=playlists[pi],item=pl&&pl.entries&&pl.entries[ci];if(!item)return;const bridge=window.InfinityOnlineBridge;if(!bridge){status('Player integration unavailable. Reload and try again.',true);return}try{bridge.playPlaylist(pl.entries.map(x=>({url:x.url,title:x.name,artist:x.group||pl.name,video:x.video,hls:!!x.hls,kind:x.kind})),ci);status('Playing '+item.name+' in Now Playing.')}catch(e){status(e.message||'Unable to start IPTV channel.',true)}}
+ async function addUrl(){
+  const url=safeUrl($('vlcf-url').value);if(!url)return status('Valid HTTP(S) playlist / stream URL paste karein.',true);
+  const b=$('vlcf-fetch');if(b.disabled)return;b.disabled=true;status('Checking IPTV URL…');
+  try{
+   const u=new URL(url),path=u.pathname.toLowerCase(),directHls=/\.m3u8$/i.test(path),directMedia=/\.(mp3|m4a|aac|ogg|opus|flac|wav|mp4|m4v|webm|ts|mpeg|mpg)$/i.test(path);
+   let items;
+   if(directHls)items=[{name:decodeURIComponent(path.split('/').pop()||'IPTV Live Channel'),group:'Live HLS',url,video:true,hls:true,kind:'video'}];
+   else if(directMedia)items=[await detectMedia({name:decodeURIComponent(path.split('/').pop()||'IPTV Stream'),group:'Direct stream',url,kind:'auto'})];
+   else{
+    const ctl=AbortSignal.timeout?AbortSignal.timeout(20000):undefined;
+    const r=await fetch(url,{mode:'cors',credentials:'omit',redirect:'follow',cache:'no-store',signal:ctl});
+    if(!r.ok)throw Error('HTTP '+r.status);
+    const body=await r.text();if(!body.trim())throw Error('Playlist response is empty.');
+    items=await classify(parseM3U(body,r.url||url,'IPTV Playlist'));
+   }
+   if(!items.length)throw Error('No channels found in this URL.');
+   const name=decodeURIComponent(u.pathname.split('/').pop()||'IPTV URL Playlist').replace(/\.(m3u8?|txt)$/i,'')||'IPTV URL Playlist';
+   playlists.push({id:'iptv_'+Date.now().toString(36),name,entries:items});selectedPlaylist=playlists.length-1;persist();render();
+   $('vlcf-url').value='';status('Imported '+items.length+' IPTV item(s). Select a channel to play.');
+  }catch(e){
+   const cors=/failed to fetch|networkerror|load failed|cors/i.test(String(e&&e.message));
+   status('Import failed: '+(cors?'Playlist host CORS access block kar raha hai. Direct .m3u8 stream URL use karein, ya M3U file download karke import karein.':e.message),true);
+  }finally{b.disabled=false}
+ }
+ function play(pi,ci){const pl=playlists[pi],item=pl&&pl.entries&&pl.entries[ci];if(!item)return;const bridge=window.InfinityOnlineBridge;if(!bridge){status('Player integration unavailable. Reload and try again.',true);return}try{bridge.playPlaylist(pl.entries.map(x=>({url:x.url,title:x.name,artist:x.group||pl.name,video:x.video,hls:!!x.hls,kind:x.kind,art:x.logo||null})),ci);status('Playing '+item.name+' in Now Playing.')}catch(e){status(e.message||'Unable to start IPTV channel.',true)}}
  function removePlaylist(pi){const pl=playlists[pi];if(!pl)return;if(!confirm('Remove IPTV playlist "'+pl.name+'"?'))return;playlists.splice(pi,1);selectedPlaylist=Math.max(0,Math.min(selectedPlaylist,playlists.length-1));persist();render();status('Playlist removed.')}
  function exportM3U(){const pl=playlists[selectedPlaylist];if(!pl)return status('No playlist selected to export.',true);const lines=['#EXTM3U'];(pl.entries||[]).forEach(x=>{lines.push('#EXTINF:-1 group-title="'+String(x.group||'').replace(/["\r\n]/g,'')+'",'+String(x.name||'Channel').replace(/[\r\n]/g,' '));lines.push(x.url)});const a=document.createElement('a'),u=URL.createObjectURL(new Blob([lines.join('\n')],{type:'audio/x-mpegurl'}));a.href=u;a.download=(pl.name||'iptv-playlist')+'.m3u';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);status('Playlist exported.')}
  function parseYouTube(raw){let u;try{u=new URL(raw)}catch(_){return null}const host=u.hostname.replace(/^www\./,'').toLowerCase();if(!['youtube.com','m.youtube.com','music.youtube.com','youtu.be'].includes(host))return null;const list=u.searchParams.get('list'),video=u.searchParams.get('v')||(host==='youtu.be'?u.pathname.split('/').filter(Boolean)[0]:null);if(list&&/^[A-Za-z0-9_-]{10,80}$/.test(list))return {type:'playlist',id:list,url:'https://www.youtube.com/playlist?list='+encodeURIComponent(list)};if(video&&/^[A-Za-z0-9_-]{11}$/.test(video))return {type:'video',id:video,url:'https://www.youtube.com/watch?v='+encodeURIComponent(video)};return null}
- function renderYT(){const list=$('vlcf-yt-list');if(!list)return;list.innerHTML=ytItems.length?ytItems.map((x,i)=>'<div class="vlcf-item"><span title="'+esc(x.url)+'">'+esc(x.title)+'</span><small>'+esc(x.type==='playlist'?'Playlist':'Video')+'</small><button class="vlcf-btn secondary" data-yt-play="'+i+'">Play</button><button class="vlcf-btn danger" data-yt-remove="'+i+'">Remove</button></div>').join(''):'<p class="vlcf-status">No YouTube videos or playlists saved yet.</p>'}
+ function renderYT(){const list=$('vlcf-yt-list');if(!list)return;list.innerHTML=ytItems.length?ytItems.map((x,i)=>'<div class="vlcf-item">'+(x.type==='video'?'<img class="vlcf-thumb vlcf-thumb-wide" src="https://i.ytimg.com/vi/'+encodeURIComponent(x.id)+'/hqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">':'<span class="vlcf-thumb vlcf-thumb-fallback">▶</span>')+'<span title="'+esc(x.url)+'">'+esc(x.title)+'</span><small>'+esc(x.type==='playlist'?'Playlist':'Video')+'</small><button class="vlcf-btn secondary" data-yt-play="'+i+'">Play</button><button class="vlcf-btn danger" data-yt-remove="'+i+'">Remove</button></div>').join(''):'<p class="vlcf-status">No YouTube videos or playlists saved yet.</p>'}
  function playYT(item){const b=window.InfinityOnlineBridge;if(!b)return $('vlcf-yt-status').textContent='Main player integration is unavailable.';try{if(item.type==='playlist')b.playYouTubePlaylist(item.id);else b.playYouTubeVideo(item.id);window.show?.('player');$('vlcf-yt-status').textContent='Playing in Now Playing. YouTube playback controls are linked to the main player.'}catch(e){$('vlcf-yt-status').textContent=e.message||'Could not play YouTube item.'}}
  function addYT(){const target=parseYouTube($('vlcf-yt-url').value);if(!target){$('vlcf-yt-status').textContent='Valid YouTube video / playlist URL paste karein.';return}let item=ytItems.find(x=>x.type===target.type&&x.id===target.id);if(!item){item={...target,title:target.type==='playlist'?'YouTube Playlist':'YouTube Video'};ytItems.unshift(item);persistYT();renderYT()}$('vlcf-yt-url').value='';playYT(item)}
  function init(){
