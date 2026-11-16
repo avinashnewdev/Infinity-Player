@@ -3779,7 +3779,7 @@ function syncAudioTracks(t){
   let curVal=(tk&&tk.activeAudVal)||'';
   let htmlGroups='';
   const trackOpts=[];
-  const hlsTracks=onlineHls&&onlineHls.audioTracks?onlineHls.audioTracks:[];
+  const hlsTracks=window.InfinityIPTVAudio?.audioTracks(onlineHls)||(onlineHls&&onlineHls.audioTracks?onlineHls.audioTracks:[]);
   if(hlsTracks.length){
     hlsTracks.forEach((tr,k)=>{const ln=langName(tr.lang)||tr.lang||'';const lbl=tr.name||(ln?('Track '+(k+1)+' ('+ln+')'):('HLS Audio '+(k+1)));trackOpts.push(['hls:'+k,lbl,curVal==='hls:'+k,'vol'])});
     if(!curVal||!curVal.startsWith('hls:')){curVal='hls:'+(onlineHls.audioTrack>=0?onlineHls.audioTrack:0);trackOpts.forEach(o=>o[2]=o[0]===curVal)}
@@ -3841,7 +3841,7 @@ async function setAudioLang(val){
   if(val!=='ext:play'){extAu.pause();extAu.removeAttribute('src');au.muted=false}
   if(val.startsWith('hls:')&&onlineHls){
     const idx=+val.slice(4);
-    if(onlineHls.audioTracks&&onlineHls.audioTracks[idx]){onlineHls.audioTrack=idx;toast('IPTV Audio Track '+(idx+1)+' selected')}
+    if((window.InfinityIPTVAudio?.selectAudio(onlineHls,idx))||(onlineHls.audioTracks&&onlineHls.audioTracks[idx]&&(onlineHls.audioTrack=idx)>=0)){toast('IPTV Audio Track '+(idx+1)+' selected');if(t)t.activeAudVal='hls:'+idx}
     else toast('This IPTV stream has no selectable audio rendition.',5000);
   }else if(val.startsWith('tr:')){
     const idx=+val.slice(3),at=au.audioTracks;
@@ -4178,14 +4178,14 @@ window.InfinityOnlineBridge={
  add(item){
   if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
   const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
-  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null}
-  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,art:item.art||null,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.art=item.art||t.art||null;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,art:t.art||null,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
  playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
  playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
- playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
+ playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",art:"https://i.ytimg.com/vi/"+encodeURIComponent(id)+"/hqdefault.jpg",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
  has(id){return !!T(id)},
 };
 async function load(){
@@ -4238,6 +4238,10 @@ async function load(){
     if(au.canPlayType('application/vnd.apple.mpegurl'))au.src=playUrl;
     else if(window.Hls&&Hls.isSupported()){
       onlineHls=new Hls({enableWorker:true,lowLatencyMode:false});
+      window.InfinityIPTVAudio?.bind(onlineHls,au);
+      onlineHls.on(Hls.Events.AUDIO_TRACKS_UPDATED,()=>syncAudioTracks(t));
+      onlineHls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>syncToolStates());
+      onlineHls.on(Hls.Events.AUDIO_TRACK_SWITCHED,(_,d)=>{if(d&&d.id!=null)t.activeAudVal='hls:'+d.id});
       onlineHls.loadSource(playUrl);onlineHls.attachMedia(au);
       onlineHls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){toast('HLS stream error: '+(d.details||d.type),5000);stopOnlineAdapters()}});
       onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
@@ -4311,7 +4315,7 @@ function upd(){
   syncToolStates();markCur();rq();drawWave();
 }
 function syncToolStates(){
-  const t=T(queue[i])||T(queue[0]),hasSub=!!(lrc.length||(au.textTracks&&au.textTracks.length));
+  const t=T(queue[i])||T(queue[0]),hasSub=!!(lrc.length||(au.textTracks&&au.textTracks.length)||(onlineHls&&onlineHls.subtitleTracks&&onlineHls.subtitleTracks.length)||isOnlineYouTube());
   const ccBtn=$('#cc');if(ccBtn)ccBtn.classList.toggle('act',!!(subOn&&hasSub)||(onlineHls&&onlineHls.subtitleTrack>=0)||(isOnlineYouTube()&&currentOnlineTrack()?.youtubeCaptionOn));
   const inPip=!!(document.pictureInPictureElement||window.pipActive);
   ['#pip','#opip'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',inPip)});
@@ -5319,7 +5323,7 @@ function ovShow(){
   const vsOpen=$('#vstretch-panel')&&!$('#vstretch-panel').hidden;
   if(!au.paused&&!portal.classList.contains('open')&&!vsOpen)ovT=setTimeout(()=>ov.classList.add('hide'),4500);
 }
-['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{if(inFS())disableAutoPiPForFS();else au.disablePictureInPicture=false;ovShow();const t=T(queue[i])||T(queue[0]);$('#otitle').textContent=(t||{}).title||'Aurora Music';syncFullscreenMediaList();try{if(inFS()&&$('#art').classList.contains('isvid'))screen.orientation.lock('landscape').catch(()=>{});else screen.orientation.unlock()}catch(e){}}));
+['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{if(inFS())disableAutoPiPForFS();else au.disablePictureInPicture=false;syncCcButtonLocation();ovShow();const t=T(queue[i])||T(queue[0]);$('#otitle').textContent=(t||{}).title||'Aurora Music';syncFullscreenMediaList();try{if(inFS()&&$('#art').classList.contains('isvid'))screen.orientation.lock('landscape').catch(()=>{});else screen.orientation.unlock()}catch(e){}}));
 au.addEventListener('playing',ovShow);au.addEventListener('pause',ovShow);
 ['mousemove','pointermove','pointerdown','touchstart','click'].forEach(ev=>$('#art').addEventListener(ev,ovShow,{passive:true}));
 ov.onclick=e=>{
@@ -5375,6 +5379,10 @@ $('#fit').onclick=e=>{
 };
 $('#ofit').onclick=e=>{if(e)e.stopPropagation();$('#fit').click();ovShow()};
 $('#fsb').onclick=fs;
+// Keep one CC control: move the existing button into the fullscreen drawer when needed.
+const ccButton=$('#cc'),ccHome=ccButton&&ccButton.parentElement,ccHomeMarker=ccButton?document.createComment('cc-button-home'):null;
+if(ccButton&&ccHomeMarker)ccHome.insertBefore(ccHomeMarker,ccButton);
+function syncCcButtonLocation(){if(!ccButton)return;const slot=$('#cc-slot');if(inFS()&&slot){ccButton.className='ob ob-ico';slot.appendChild(ccButton)}else if(ccHomeMarker&&ccHomeMarker.parentNode){ccButton.className='tbtn tbtn-ico';ccHomeMarker.parentNode.insertBefore(ccButton,ccHomeMarker)}}
 // Item 7: Universal Picture-in-Picture (Works 100% for BOTH Video & Audio via Floating Glass PiP + Native OS PiP)
 let pipCv=null,pipV=null,pipTimer=null;
 function renderPipFrame(){
@@ -7057,5 +7065,6 @@ au.addEventListener('timeupdate',function(){if(lrc.length&&!lrc.plain)lrcTick()}
 <script src="js/vlc/youtube-playlists.js" defer></script>
 <script src="js/vlc/video-codec-compat.js" defer></script>
 <script src="js/vlc/offline-codec-engine.js" defer></script>
+<script src="js/vlc/iptv-audio.js" defer></script>
 <script src="js/vlc/features-tab.js" defer></script>
 </body></html>
