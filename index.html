@@ -2686,9 +2686,7 @@ input.mp-drag{filter:brightness(1.15)}
  <div id="topbar">
   <label class="lg sbar"><svg class="i"><use href="#i-search"/></svg><input id="gs" type="search" placeholder="Master Search" autocomplete="off"></label>
   <button class="lg tgl" id="thm" aria-label="Light / Dark theme" title="Toggle Light / Dark Mode"><span class="tgl-trail"></span><i class="knob"><span class="knob-glint"></span><span class="knob-glow"></span><svg class="i starI"><use href="#i-starburst"/></svg></i><svg class="i sunI"><use href="#i-sun"/></svg><svg class="i moonI"><use href="#i-moon"/></svg></button>
-  <button type="button" class="btn sm gl" id="app-install-btn" title="Install Infinity Player" aria-label="Install Infinity Player"><svg class="i"><use href="#i-dl"/></svg> Install App</button>
   <button class="lg prof-pill" id="prof-btn" title="Offline User Profile Login"><span class="prof-av" id="top-av">A</span><span id="top-uname">Avi</span></button>
-  <button class="lg avt" data-go="settings" aria-label="Settings"><svg class="i"><use href="#i-sliders"/></svg></button>
  </div>
  <section class="view on" id="v-home">
   <h1 id="greet"></h1>
@@ -2732,7 +2730,7 @@ input.mp-drag{filter:brightness(1.15)}
       <div class="ovd-grid">
        <button type="button" class="ob ob-ico" id="omute" title="Mute / Unmute" aria-label="Mute"><svg class="i"><use href="#i-vol"/></svg></button>
        <select id="ospd" aria-label="Speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
-       <button type="button" class="ob ob-ico" id="occ" title="Subtitles / Captions" aria-label="Subtitles"><svg class="i"><use href="#i-cc"/></svg></button>
+       <span id="cc-slot" style="display:inline-flex"></span>
        <button type="button" class="ob ob-ico" id="ofit" title="Cycle Fit / Fill / Stretch" aria-label="Fit or Fill"><svg class="i"><use href="#i-fit"/></svg><span id="ofit-lbl" hidden>Fit</span></button>
        <button type="button" class="ob ob-ico" id="ovstretch-btn" title="Video Zoom & 4-Side Stretch" aria-label="Zoom and Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
        <button type="button" class="ob ob-ico" id="opip" title="Picture-in-Picture" aria-label="PiP"><svg class="i"><use href="#i-pip"/></svg></button>
@@ -4314,7 +4312,7 @@ function upd(){
 }
 function syncToolStates(){
   const t=T(queue[i])||T(queue[0]),hasSub=!!(lrc.length||(au.textTracks&&au.textTracks.length));
-  ['#cc','#occ'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',subOn&&hasSub)});
+  const ccBtn=$('#cc');if(ccBtn)ccBtn.classList.toggle('act',!!(subOn&&hasSub)||(onlineHls&&onlineHls.subtitleTrack>=0)||(isOnlineYouTube()&&currentOnlineTrack()?.youtubeCaptionOn));
   const inPip=!!(document.pictureInPictureElement||window.pipActive);
   ['#pip','#opip'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',inPip)});
 }
@@ -4700,9 +4698,7 @@ function rOffl(){
  const label=st?'App installed':ready?'Ready to install':'Install on this device';
  $('#offl').innerHTML='<b>'+I(st?'check':'dl')+' '+label+'</b><span class="mut" style="color:inherit;opacity:.85">'+(st?'Infinity Player app mode is active.':ready?'Install for a standalone app window and home-screen icon.':'Use your browser’s install option to add Infinity Player to your device.')+'</span>'+(st?'':'<button class="btn wide" id="inst2" style="margin-top:9px">'+I('dl')+' Install Infinity Player</button>');
  const b=$('#inst2');if(b)b.onclick=installApp;
- const top=$('#app-install-btn');if(top){top.innerHTML=st?I('check')+' Installed':I('dl')+' Install App';top.disabled=st;top.title=st?'Infinity Player is installed':'Install Infinity Player on this device'}
 }
-$('#app-install-btn')?.addEventListener('click',installApp);
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;rOffl()});
 addEventListener('appinstalled',()=>{dip=null;rOffl();toast('Infinity Player successfully installed')});
 $('#rpclr').onclick=()=>{recent=[];S.set('recent',recent);rh()};
@@ -5491,7 +5487,6 @@ function handleSubBtn(e){
   }
 }
 $('#cc').onclick=handleSubBtn;$('#cc').ondblclick=()=>$('#sfi').click();
-$('#occ').onclick=e=>{handleSubBtn(e);ovShow()};$('#occ').ondblclick=()=>$('#sfi').click();
 $('#omute').onclick=()=>{toggleMute();ovShow()};
 $('#oseek').oninput=e=>{seeking=true;ensureTrack();if(isOnlineYouTube()&&onlineYt){const d=onlineYt.getDuration()||0;if(d)onlineYt.seekTo(e.target.value/1000*d,true)}else{const d=au.duration||16;au.currentTime=e.target.value/1000*d}ovShow()};
 $('#oseek').onchange=()=>seeking=false;
@@ -6634,14 +6629,7 @@ var menuBtn=q('#pp-menu-btn'),drawer=q('#pp-drawer'),drawerClose=q('#pp-drawer-c
 
 var timer=null,curId=null,isOpen=false,pushed=false,isScrubbing=false;
 
-/* Header fullscreen button wire */
-var ph=$('.phead');
-if(ph&&!$('#mp-pos-btn')){
-  var b=document.createElement('button');b.type='button';b.id='mp-pos-btn';b.className='gcirc';
-  b.setAttribute('aria-label','Fullscreen');b.innerHTML='<svg class="i"><use href="#i-expand"/></svg>';
-  ph.appendChild(b);
-  b.addEventListener('click',open);
-}
+/* Duplicate floating fullscreen icon removed; #fsb is the only fullscreen button. */
 var artEl=$('#art');
 if(artEl)artEl.addEventListener('click',function(e){
   if(e.target.closest('#ov-drawer,#vstretch-panel,#csel-portal'))return;
