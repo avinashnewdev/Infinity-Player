@@ -1809,9 +1809,7 @@ main#main{position:relative}
 }
 
 /* 5) Brightness Filter & Gesture HUD (#gesture-hud & #bright-scrim) */
-#art #vid{
-  filter:brightness(var(--vbright,1)) contrast(var(--vcontrast,1));
-}
+#art #vid{\n  filter:brightness(calc(var(--vbright,1)*var(--vhdr-bright,1))) contrast(calc(var(--vcontrast,1)*var(--vhdr-contrast,1))) saturate(var(--vhdr-sat,1));\n}
 #bright-scrim{
   position:absolute;inset:0;z-index:2;pointer-events:none;
   background:#000;opacity:var(--vdim,0);transition:opacity .08s linear
@@ -2734,6 +2732,7 @@ input.mp-drag{filter:brightness(1.15)}
        <span id="cc-slot" style="display:inline-flex"></span>
        <button type="button" class="ob ob-ico" id="ofit" title="Cycle Fit / Fill / Stretch" aria-label="Fit or Fill"><svg class="i"><use href="#i-fit"/></svg><span id="ofit-lbl" hidden>Fit</span></button>
        <button type="button" class="ob ob-ico" id="ovstretch-btn" title="Video Zoom & 4-Side Stretch" aria-label="Zoom and Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
+       <button type="button" class="ob ob-ico" id="ovhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
        <button type="button" class="ob ob-ico" id="opip" title="Picture-in-Picture" aria-label="PiP"><svg class="i"><use href="#i-pip"/></svg></button>
        <span id="ofit-wrap" style="display:none"><select id="ofit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
        <span id="oaud-wrap"><select id="oaud" data-ico="vol" aria-label="Audio Track"><option value="ch:stereo" data-ico="vol">Audio: Default</option></select></span>
@@ -2792,6 +2791,7 @@ input.mp-drag{filter:brightness(1.15)}
       <button class="tbtn tbtn-ico" id="cc" aria-label="Subtitles / Captions" title="Subtitles / Captions"><svg class="i"><use href="#i-cc"/></svg></button>
       <span id="fit-wrap" style="display:none"><select id="fit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
       <button type="button" class="tbtn tbtn-ico" id="fit" aria-label="Cycle Fit / Fill / Stretch" title="Fit / Fill / Stretch"><svg class="i"><use href="#i-fit"/></svg><span id="fit-lbl" hidden>Fit</span></button>
+      <button type="button" class="tbtn tbtn-ico" id="vhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
       <button type="button" class="tbtn tbtn-ico" id="vstretch-btn" aria-label="Video Zoom & 4-Side Stretch" title="Zoom & Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
       <button class="tbtn tbtn-ico" id="pip" aria-label="Picture in picture" title="Picture-in-Picture"><svg class="i"><use href="#i-pip"/></svg></button>
       <button class="tbtn tbtn-ico" id="fsb" aria-label="Fullscreen" title="Fullscreen"><svg class="i"><use href="#i-expand"/></svg></button>
@@ -4043,6 +4043,24 @@ function setVideoFitMode(mode,showMsg=true){
     toast('Screen Mode: '+(labels[vFitMode]||vFitMode));
   }
 }
+let hdrLook=!!S.get('hdrLook',false);
+function applyHdrLook(){
+  const v=$('#vid');
+  if(v){
+    v.style.setProperty('--vhdr-bright',hdrLook?'1.04':'1');
+    v.style.setProperty('--vhdr-contrast',hdrLook?'1.12':'1');
+    v.style.setProperty('--vhdr-sat',hdrLook?'1.2':'1');
+  }
+  ['#vhdr','#ovhdr'].forEach(sel=>{const b=$(sel);if(b){b.classList.toggle('act',hdrLook);b.setAttribute('aria-pressed',String(hdrLook))}});
+}
+function setHdrLook(enabled){
+  hdrLook=!!enabled;S.set('hdrLook',hdrLook);applyHdrLook();
+  toast(hdrLook?'HDR Look enabled (SDR visual enhancement only; no HDR decoding)':'HDR Look disabled');
+}
+$('#vhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
+$('#ovhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
+applyHdrLook();
+
 (()=>{
   const p=$('#vstretch-panel'),a=$('#art');
   if(p){
