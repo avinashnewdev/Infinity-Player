@@ -3327,6 +3327,21 @@ try{const extSrc=ctx.createMediaElementSource(extAu);extSrc.connect(inNorm)}catc
 an.fftSize=1024;an.smoothingTimeConstant=0.76;an.minDecibels=-88;an.maxDecibels=-10;
 const filters=F.map((f,k)=>{const b=ctx.createBiquadFilter();b.type=k==0?'lowshelf':k==19?'highshelf':'peaking';b.frequency.value=Math.min(f,ctx.sampleRate*.45);b.Q.value=1.6;b.gain.value=gains[k];return b});
 function wire(){wireChannels();[chMerge,boostNode,compNode,pre,bassNode,panNode,an,...filters].forEach(n=>{try{n.disconnect()}catch(e){}});let n=chMerge;n.connect(boostNode);n=boostNode;n.connect(bassNode);n=bassNode;n.connect(panNode);n=panNode;if(!bypass){n.connect(pre);n=pre;filters.forEach(f=>{n.connect(f);n=f})}if(chMode==='boost'||chMode==='boost300'||chMode==='voice'){n.connect(compNode);n=compNode}n.connect(an);an.connect(ctx.destination)}
+// Network IPTV streams bypass the multi-channel DSP matrix. This keeps the browser's
+// decoded stream audio audible even when a provider uses unusual channel layouts.
+let remoteAudioBypass=false;
+function setRemoteAudioBypass(enabled){
+  const next=!!enabled;
+  if(next===remoteAudioBypass)return;
+  try{
+    src.disconnect();
+    src.connect(next?ctx.destination:inNorm);
+    remoteAudioBypass=next;
+    if(next)ensureAudioCtx();
+  }catch(e){
+    try{src.disconnect();src.connect(inNorm);remoteAudioBypass=false}catch(_){}
+  }
+}
 pre.gain.value=Math.pow(10,pdb/20);wire();
 const fd=new Uint8Array(an.frequencyBinCount),td=new Uint8Array(an.fftSize);
 const specSmooth=new Float32Array(64),specPeak=new Float32Array(64);
@@ -4215,7 +4230,10 @@ async function load(){
   }else{
     chMode='stereo';
   }
-  wire();syncMuteUI();
+  wire();
+  // Keep IPTV/network audio on a simple output path; local files retain the full DSP/EQ chain.
+  setRemoteAudioBypass(!!(t.online||t.hls));
+  syncMuteUI();
   [...au.querySelectorAll('track')].forEach(x=>x.remove());
   au.poster=t.video&&t.art?t.art:'';
   cnt=false;
