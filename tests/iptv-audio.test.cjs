@@ -56,5 +56,5 @@ test('track binding removes old listeners and clear resets the adapter', () => {
   assert.equal(updates, 1);
   api.clear();
   assert.equal(listeners.size, 0);
-  assert.deepEqual(api.audioTracks(), []);
+  assert.equal(api.audioTracks().length, 0);
 });
