@@ -3262,9 +3262,19 @@ function abortBgThumb(){
   }
 }
 const ctx=new (window.AudioContext||window.webkitAudioContext)();
+let audioCtxResumePromise=null;
 function ensureAudioCtx(){
-  if(ctx&&ctx.state!=='running'){try{ctx.resume().catch(()=>{})}catch(e){}}
+  if(!ctx)return Promise.resolve(false);
+  if(ctx.state==='running')return Promise.resolve(true);
+  if(audioCtxResumePromise)return audioCtxResumePromise;
+  try{
+    audioCtxResumePromise=ctx.resume().then(()=>ctx.state==='running').catch(()=>false).finally(()=>{audioCtxResumePromise=null});
+    return audioCtxResumePromise;
+  }catch(_){return Promise.resolve(false)}
 }
+// Unlock/resume Web Audio directly from real user gestures, including after tab suspension.
+document.addEventListener('pointerdown',()=>{if(ctx.state!=='running')void ensureAudioCtx()},{capture:true,passive:true});
+document.addEventListener('keydown',()=>{if(ctx.state!=='running')void ensureAudioCtx()},{capture:true});
 // Stereo Normalizer Node (inNorm): Forces 5.1/7.1 Surround (FL+FC+FR+SL+SR) to downmix Center dialogue channel into L+R, and 1-ch Mono to upmix to both ears!
 const src=ctx.createMediaElementSource(au),inNorm=ctx.createGain(),chSplit=ctx.createChannelSplitter(2),chMerge=ctx.createChannelMerger(2),gLL=ctx.createGain(),gLR=ctx.createGain(),gRL=ctx.createGain(),gRR=ctx.createGain(),boostNode=ctx.createGain(),compNode=ctx.createDynamicsCompressor(),pre=ctx.createGain(),bassNode=ctx.createBiquadFilter(),panNode=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain(),an=ctx.createAnalyser();
 try{
@@ -3332,12 +3342,14 @@ function wire(){wireChannels();[chMerge,boostNode,compNode,pre,bassNode,panNode,
 let remoteAudioBypass=false;
 function setRemoteAudioBypass(enabled){
   const next=!!enabled;
+  // Resume even when the route is already in bypass mode (e.g. after background-tab suspension).
+  if(next)void ensureAudioCtx();
   if(next===remoteAudioBypass)return;
   try{
     src.disconnect();
     src.connect(next?ctx.destination:inNorm);
     remoteAudioBypass=next;
-    if(next)ensureAudioCtx();
+    if(next)void ensureAudioCtx();
   }catch(e){
     try{src.disconnect();src.connect(inNorm);remoteAudioBypass=false}catch(_){}
   }
@@ -4218,6 +4230,8 @@ window.InfinityOnlineBridge={
 async function load(){
   const t=T(queue[i]);if(!t)return;
   stopOnlineAdapters();
+  // Request AudioContext resume while the play action is still in its initiating gesture.
+  void ensureAudioCtx();
   if(t.youtubeId||t.youtubeVideoId){startOnlineYouTube(t);if(cur!=='player')show('player');if(remember){recent=[t.id,...recent.filter(x=>x!=t.id)].slice(0,12);S.set('recent',recent)}setLrc(t);syncAudioTracks(t);syncFullscreenMediaList();upd();rh();return;}
   abortBgThumb();
   extAu.pause();extAu.removeAttribute('src');
@@ -4296,8 +4310,19 @@ async function load(){
         stopOnlineAdapters();
       });
       onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
-        if(onlineHls.audioTracks&&onlineHls.audioTracks.length){const def=onlineHls.audioTracks.findIndex(x=>x.default);onlineHls.audioTrack=def>=0?def:0;syncAudioTracks(t)}
-        au.play().catch(()=>{});
+        if(onlineHls&&onlineHls.audioTracks&&onlineHls.audioTracks.length){
+          const def=onlineHls.audioTracks.findIndex(x=>x.default);
+          onlineHls.audioTrack=def>=0?def:0;
+          syncAudioTracks(t);
+        }else{
+          // No alternate rendition is normal for muxed HLS; keep the muxed audio path enabled.
+          t.activeAudVal=(t.activeAudVal&&t.activeAudVal.startsWith('ch:'))?t.activeAudVal:'';
+        }
+        void ensureAudioCtx().then(()=>{
+          if(T(queue[i])!==t||!onlineHls)return;
+          if(!(t.activeAudVal==='ch:mute'))au.muted=false;
+          au.play().catch(err=>toast('IPTV playback audio start blocked. Tap Play once to enable sound.',5000));
+        });
       });
     }else{toast('Is browser mein HLS playback supported nahi hai.',5000);return;}
   }else au.src=playUrl;
@@ -4371,7 +4396,8 @@ function syncToolStates(){
   const inPip=!!(document.pictureInPictureElement||window.pipActive);
   ['#pip','#opip'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',inPip)});
 }
-au.onplay=()=>{ensureAudioCtx();au.playbackRate=curSpd;if(extAu.src&&au.muted){extAu.currentTime=au.currentTime;extAu.play().catch(()=>{})}upd()};
+au.onplay=()=>{void ensureAudioCtx();au.playbackRate=curSpd;if(extAu.src&&au.muted){extAu.currentTime=au.currentTime;extAu.play().catch(()=>{})}upd()};
+au.addEventListener('playing',()=>{if(ctx.state!=='running')void ensureAudioCtx()});
 au.onpause=()=>{extAu.pause();upd()};
 au.onended=()=>{extAu.pause();const t=T(queue[i]);if(t&&pos[t.id]){delete pos[t.id];S.set('pos',pos)}next(true)};
 au.onloadedmetadata=()=>{
