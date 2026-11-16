@@ -3846,7 +3846,8 @@ async function setAudioLang(val){
   }else if(val.startsWith('tr:')){
     const idx=+val.slice(3),at=au.audioTracks;
     if(at&&at.length){
-      for(let k=0;k<at.length;k++)at[k].enabled=(k===idx);
+      const selected=window.InfinityIPTVAudio?.selectNativeAudio(au,idx);
+      if(!selected)for(let k=0;k<at.length;k++)at[k].enabled=(k===idx);
       try{au.currentTime=Math.max(0,au.currentTime-0.05)}catch(e){}
     }
     if(chMode==='mute')chMode='stereo';
@@ -4140,7 +4141,11 @@ function ensureYouTubeApi(){
   const previous=window.onYouTubeIframeAPIReady;
   window.onYouTubeIframeAPIReady=()=>{try{previous&&previous()}catch(e){}resolve()};
   const script=document.createElement('script');script.src='https://www.youtube.com/iframe_api';
-  script.onerror=()=>reject(Error('YouTube player API could not load.'));
+  script.onerror=()=>{
+   script.remove();
+   onlineYtApiPromise=null; // allow a later retry instead of caching a permanently rejected promise
+   reject(Error('YouTube player API could not load. Check your connection and retry.'));
+  };
   document.head.appendChild(script);
  });return onlineYtApiPromise;
 }
@@ -4235,10 +4240,14 @@ async function load(){
   }
   if(t.hls){
     au.removeAttribute('src');au.load();
-    if(au.canPlayType('application/vnd.apple.mpegurl'))au.src=playUrl;
+    if(au.canPlayType('application/vnd.apple.mpegurl')){
+      au.src=playUrl;
+      // Safari/native HLS may expose alternate audio tracks after metadata is loaded.
+      window.InfinityIPTVAudio?.bind(null,au,()=>syncAudioTracks(t));
+    }
     else if(window.Hls&&Hls.isSupported()){
       onlineHls=new Hls({enableWorker:true,lowLatencyMode:false});
-      window.InfinityIPTVAudio?.bind(onlineHls,au);
+      window.InfinityIPTVAudio?.bind(onlineHls,au,()=>syncAudioTracks(t));
       onlineHls.on(Hls.Events.AUDIO_TRACKS_UPDATED,()=>syncAudioTracks(t));
       onlineHls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>syncToolStates());
       onlineHls.on(Hls.Events.AUDIO_TRACK_SWITCHED,(_,d)=>{if(d&&d.id!=null)t.activeAudVal='hls:'+d.id});
