@@ -64,7 +64,8 @@ main{grid-area:main;overflow-y:auto;overflow-x:hidden;min-width:0;min-height:0;b
 .btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.96)}.btn.sm{padding:6px 14px;font-size:13px}.btn .i{width:18px;height:18px}
 .btn.gl{background:var(--row);color:var(--tx);border:1px solid var(--bd)}.btn.gl:hover{background:var(--rowh)}.btn.wide{width:100%;justify-content:center}
 .ib{background:none;border:0;color:var(--tx);cursor:pointer;padding:8px;border-radius:50%;transition:transform .15s,background .15s,color .15s;flex:none;display:inline-grid;place-items:center}
-.ib:hover{background:var(--row)}.ib:active{transform:scale(.86)}.ib.act{color:var(--mint)}.ib.sq{border-radius:16px;width:46px;height:46px;padding:0}
+.ib:hover{background:var(--row)}.ib:active{transform:scale(.86)}.ib.act{color:var(--mint)}
+.tbtn:active,.ob:active,.chip:active,#snav button:active{transform:scale(.94);transition:transform .13s cubic-bezier(.34,1.56,.64,1)}.ib.sq{border-radius:16px;width:46px;height:46px;padding:0}
 .hrt.on .i{fill:var(--pk);stroke:var(--pk)}
 .pp{width:46px;height:46px;border-radius:50%;background:var(--tx);color:var(--bg)}.pp:hover{background:var(--tx);transform:scale(1.06)}.pp.xl{width:72px;height:72px;box-shadow:0 0 34px color-mix(in srgb,var(--ac) 65%,transparent)}.pp.xl .i{width:30px;height:30px}
 input,select{background:var(--row);color:var(--tx);border:1px solid var(--bd);border-radius:14px;padding:9px 14px;font:inherit;max-width:100%}
@@ -1810,7 +1811,7 @@ main#main{position:relative}
 
 /* 5) Brightness Filter & Gesture HUD (#gesture-hud & #bright-scrim) */
 #art #vid{
-  filter:brightness(var(--vbright,1)) contrast(var(--vcontrast,1));
+  filter:brightness(calc(var(--vbright,1)*var(--vhdr-bright,1))) contrast(calc(var(--vcontrast,1)*var(--vhdr-contrast,1))) saturate(var(--vhdr-sat,1));
 }
 #bright-scrim{
   position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -2734,6 +2735,7 @@ input.mp-drag{filter:brightness(1.15)}
        <span id="cc-slot" style="display:inline-flex"></span>
        <button type="button" class="ob ob-ico" id="ofit" title="Cycle Fit / Fill / Stretch" aria-label="Fit or Fill"><svg class="i"><use href="#i-fit"/></svg><span id="ofit-lbl" hidden>Fit</span></button>
        <button type="button" class="ob ob-ico" id="ovstretch-btn" title="Video Zoom & 4-Side Stretch" aria-label="Zoom and Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
+       <button type="button" class="ob ob-ico" id="ovhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
        <button type="button" class="ob ob-ico" id="opip" title="Picture-in-Picture" aria-label="PiP"><svg class="i"><use href="#i-pip"/></svg></button>
        <span id="ofit-wrap" style="display:none"><select id="ofit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
        <span id="oaud-wrap"><select id="oaud" data-ico="vol" aria-label="Audio Track"><option value="ch:stereo" data-ico="vol">Audio: Default</option></select></span>
@@ -2792,6 +2794,7 @@ input.mp-drag{filter:brightness(1.15)}
       <button class="tbtn tbtn-ico" id="cc" aria-label="Subtitles / Captions" title="Subtitles / Captions"><svg class="i"><use href="#i-cc"/></svg></button>
       <span id="fit-wrap" style="display:none"><select id="fit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
       <button type="button" class="tbtn tbtn-ico" id="fit" aria-label="Cycle Fit / Fill / Stretch" title="Fit / Fill / Stretch"><svg class="i"><use href="#i-fit"/></svg><span id="fit-lbl" hidden>Fit</span></button>
+      <button type="button" class="tbtn tbtn-ico" id="vhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
       <button type="button" class="tbtn tbtn-ico" id="vstretch-btn" aria-label="Video Zoom & 4-Side Stretch" title="Zoom & Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
       <button class="tbtn tbtn-ico" id="pip" aria-label="Picture in picture" title="Picture-in-Picture"><svg class="i"><use href="#i-pip"/></svg></button>
       <button class="tbtn tbtn-ico" id="fsb" aria-label="Fullscreen" title="Fullscreen"><svg class="i"><use href="#i-expand"/></svg></button>
@@ -3262,9 +3265,19 @@ function abortBgThumb(){
   }
 }
 const ctx=new (window.AudioContext||window.webkitAudioContext)();
+let audioCtxResumePromise=null;
 function ensureAudioCtx(){
-  if(ctx&&ctx.state!=='running'){try{ctx.resume().catch(()=>{})}catch(e){}}
+  if(!ctx)return Promise.resolve(false);
+  if(ctx.state==='running')return Promise.resolve(true);
+  if(audioCtxResumePromise)return audioCtxResumePromise;
+  try{
+    audioCtxResumePromise=ctx.resume().then(()=>ctx.state==='running').catch(()=>false).finally(()=>{audioCtxResumePromise=null});
+    return audioCtxResumePromise;
+  }catch(_){return Promise.resolve(false)}
 }
+// Unlock/resume Web Audio directly from real user gestures, including after tab suspension.
+document.addEventListener('pointerdown',()=>{if(ctx.state!=='running')void ensureAudioCtx()},{capture:true,passive:true});
+document.addEventListener('keydown',()=>{if(ctx.state!=='running')void ensureAudioCtx()},{capture:true});
 // Stereo Normalizer Node (inNorm): Forces 5.1/7.1 Surround (FL+FC+FR+SL+SR) to downmix Center dialogue channel into L+R, and 1-ch Mono to upmix to both ears!
 const src=ctx.createMediaElementSource(au),inNorm=ctx.createGain(),chSplit=ctx.createChannelSplitter(2),chMerge=ctx.createChannelMerger(2),gLL=ctx.createGain(),gLR=ctx.createGain(),gRL=ctx.createGain(),gRR=ctx.createGain(),boostNode=ctx.createGain(),compNode=ctx.createDynamicsCompressor(),pre=ctx.createGain(),bassNode=ctx.createBiquadFilter(),panNode=ctx.createStereoPanner?ctx.createStereoPanner():ctx.createGain(),an=ctx.createAnalyser();
 try{
@@ -3332,12 +3345,14 @@ function wire(){wireChannels();[chMerge,boostNode,compNode,pre,bassNode,panNode,
 let remoteAudioBypass=false;
 function setRemoteAudioBypass(enabled){
   const next=!!enabled;
+  // Resume even when the route is already in bypass mode (e.g. after background-tab suspension).
+  if(next)void ensureAudioCtx();
   if(next===remoteAudioBypass)return;
   try{
     src.disconnect();
     src.connect(next?ctx.destination:inNorm);
     remoteAudioBypass=next;
-    if(next)ensureAudioCtx();
+    if(next)void ensureAudioCtx();
   }catch(e){
     try{src.disconnect();src.connect(inNorm);remoteAudioBypass=false}catch(_){}
   }
@@ -4031,6 +4046,24 @@ function setVideoFitMode(mode,showMsg=true){
     toast('Screen Mode: '+(labels[vFitMode]||vFitMode));
   }
 }
+let hdrLook=!!S.get('hdrLook',false);
+function applyHdrLook(){
+  const v=$('#vid');
+  if(v){
+    v.style.setProperty('--vhdr-bright',hdrLook?'1.04':'1');
+    v.style.setProperty('--vhdr-contrast',hdrLook?'1.12':'1');
+    v.style.setProperty('--vhdr-sat',hdrLook?'1.2':'1');
+  }
+  ['#vhdr','#ovhdr'].forEach(sel=>{const b=$(sel);if(b){b.classList.toggle('act',hdrLook);b.setAttribute('aria-pressed',String(hdrLook))}});
+}
+function setHdrLook(enabled){
+  hdrLook=!!enabled;S.set('hdrLook',hdrLook);applyHdrLook();
+  toast(hdrLook?'HDR Look enabled (SDR visual enhancement only; no HDR decoding)':'HDR Look disabled');
+}
+$('#vhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
+$('#ovhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
+applyHdrLook();
+
 (()=>{
   const p=$('#vstretch-panel'),a=$('#art');
   if(p){
@@ -4218,6 +4251,8 @@ window.InfinityOnlineBridge={
 async function load(){
   const t=T(queue[i]);if(!t)return;
   stopOnlineAdapters();
+  // Request AudioContext resume while the play action is still in its initiating gesture.
+  void ensureAudioCtx();
   if(t.youtubeId||t.youtubeVideoId){startOnlineYouTube(t);if(cur!=='player')show('player');if(remember){recent=[t.id,...recent.filter(x=>x!=t.id)].slice(0,12);S.set('recent',recent)}setLrc(t);syncAudioTracks(t);syncFullscreenMediaList();upd();rh();return;}
   abortBgThumb();
   extAu.pause();extAu.removeAttribute('src');
@@ -4296,8 +4331,19 @@ async function load(){
         stopOnlineAdapters();
       });
       onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
-        if(onlineHls.audioTracks&&onlineHls.audioTracks.length){const def=onlineHls.audioTracks.findIndex(x=>x.default);onlineHls.audioTrack=def>=0?def:0;syncAudioTracks(t)}
-        au.play().catch(()=>{});
+        if(onlineHls&&onlineHls.audioTracks&&onlineHls.audioTracks.length){
+          const def=onlineHls.audioTracks.findIndex(x=>x.default);
+          onlineHls.audioTrack=def>=0?def:0;
+          syncAudioTracks(t);
+        }else{
+          // No alternate rendition is normal for muxed HLS; keep the muxed audio path enabled.
+          t.activeAudVal=(t.activeAudVal&&t.activeAudVal.startsWith('ch:'))?t.activeAudVal:'';
+        }
+        void ensureAudioCtx().then(()=>{
+          if(T(queue[i])!==t||!onlineHls)return;
+          if(!(t.activeAudVal==='ch:mute'))au.muted=false;
+          au.play().catch(err=>toast('IPTV playback audio start blocked. Tap Play once to enable sound.',5000));
+        });
       });
     }else{toast('Is browser mein HLS playback supported nahi hai.',5000);return;}
   }else au.src=playUrl;
@@ -4371,7 +4417,8 @@ function syncToolStates(){
   const inPip=!!(document.pictureInPictureElement||window.pipActive);
   ['#pip','#opip'].forEach(s=>{const b=$(s);if(b)b.classList.toggle('act',inPip)});
 }
-au.onplay=()=>{ensureAudioCtx();au.playbackRate=curSpd;if(extAu.src&&au.muted){extAu.currentTime=au.currentTime;extAu.play().catch(()=>{})}upd()};
+au.onplay=()=>{void ensureAudioCtx();au.playbackRate=curSpd;if(extAu.src&&au.muted){extAu.currentTime=au.currentTime;extAu.play().catch(()=>{})}upd()};
+au.addEventListener('playing',()=>{if(ctx.state!=='running')void ensureAudioCtx()});
 au.onpause=()=>{extAu.pause();upd()};
 au.onended=()=>{extAu.pause();const t=T(queue[i]);if(t&&pos[t.id]){delete pos[t.id];S.set('pos',pos)}next(true)};
 au.onloadedmetadata=()=>{
