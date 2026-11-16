@@ -56,20 +56,27 @@
   const b=$('vlcf-fetch');if(b.disabled)return;b.disabled=true;status('Checking IPTV URL…');
   try{
    const u=new URL(url),path=u.pathname.toLowerCase(),directHls=/\.m3u8$/i.test(path),directMedia=/\.(mp3|m4a|aac|ogg|opus|flac|wav|mp4|m4v|webm|ts|mpeg|mpg)$/i.test(path);
-   let items;
+   let items,directFallback=false;
    if(directHls)items=[{name:decodeURIComponent(path.split('/').pop()||'IPTV Live Channel'),group:'Live HLS',url,video:true,hls:true,kind:'video'}];
    else if(directMedia)items=[await detectMedia({name:decodeURIComponent(path.split('/').pop()||'IPTV Stream'),group:'Direct stream',url,kind:'auto'})];
    else{
     const ctl=AbortSignal.timeout?AbortSignal.timeout(20000):undefined;
-    const r=await fetch(url,{mode:'cors',credentials:'omit',redirect:'follow',cache:'no-store',signal:ctl});
-    if(!r.ok)throw Error('HTTP '+r.status);
-    const body=await r.text();if(!body.trim())throw Error('Playlist response is empty.');
-    items=await classify(parseM3U(body,r.url||url,'IPTV Playlist'));
+    try{
+     const r=await fetch(url,{mode:'cors',credentials:'omit',redirect:'follow',cache:'no-store',signal:ctl});
+     if(!r.ok)throw Error('HTTP '+r.status);
+     const body=await r.text();if(!body.trim())throw Error('Playlist response is empty.');
+     items=await classify(parseM3U(body,r.url||url,'IPTV Playlist'));
+    }catch(fetchError){
+     // Cross-origin media URLs may play in <video> even when fetch/HEAD is blocked by CORS.
+     if(/\.(m3u8?|txt)$/i.test(path))throw fetchError;
+     directFallback=true;
+     items=[await detectMedia({name:decodeURIComponent(path.split('/').pop()||'Online IPTV Stream'),group:'Direct stream',url,kind:'auto'})];
+    }
    }
    if(!items.length)throw Error('No channels found in this URL.');
    const name=decodeURIComponent(u.pathname.split('/').pop()||'IPTV URL Playlist').replace(/\.(m3u8?|txt)$/i,'')||'IPTV URL Playlist';
    playlists.push({id:'iptv_'+Date.now().toString(36),name,entries:items});selectedPlaylist=playlists.length-1;persist();render();
-   $('vlcf-url').value='';status('Imported '+items.length+' IPTV item(s). Select a channel to play.');
+   $('vlcf-url').value='';status(directFallback?'URL direct stream ke roop mein add hua. Agar yeh M3U playlist hai, host CORS block kar raha hai—file download karke import karein.':'Imported '+items.length+' IPTV item(s). Select a channel to play.');
   }catch(e){
    const cors=/failed to fetch|networkerror|load failed|cors/i.test(String(e&&e.message));
    status('Import failed: '+(cors?'Playlist host CORS access block kar raha hai. Direct .m3u8 stream URL use karein, ya M3U file download karke import karein.':e.message),true);
