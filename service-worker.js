@@ -1,4 +1,4 @@
-const CACHE='infinity-player-shell-v4';
+const CACHE='infinity-player-shell-v5';
 const CORE=['./','./index.html','./css/vlc-features.css','./js/vlc/features-tab.js','./js/vlc/iptv-audio.js','./js/vlc/youtube-playlists.js','./js/vlc/video-codec-compat.js','./js/vlc/offline-codec-engine.js','./assets/infinity-player-logo.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
@@ -8,5 +8,9 @@ self.addEventListener('fetch',event=>{
  event.respondWith(fetch(request).then(response=>{
   if(response&&response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy))}
   return response;
- }).catch(()=>caches.match(request).then(cached=>cached||caches.match('./index.html'))));
+ }).catch(()=>caches.match(request).then(cached=>{
+  if(cached)return cached;
+  if(request.mode==='navigate')return caches.match('./index.html');
+  return Response.error();
+ })));
 });
