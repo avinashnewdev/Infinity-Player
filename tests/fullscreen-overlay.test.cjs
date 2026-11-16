@@ -8,5 +8,7 @@ test('fullscreen overlay releases hidden glass/compositing effects after idle ti
   assert.match(html, /#ov\.hide\{[^}]*visibility:hidden/);
   assert.match(html, /#ov\.hide\{[^}]*transition:opacity \.25s,visibility 0s linear \.25s/);
   assert.match(html, /#art #ov\.hide \*\{[^}]*-webkit-backdrop-filter:none!important/);
+  assert.match(html, /#art #ov\.hide \*\{[^}]*animation:none!important/);
+  assert.match(html, /#art #ov\.hide \*\{[^}]*transition:none!important/);
   assert.match(html, /#art #ov\.hide \*\{[^}]*backdrop-filter:none!important/);
 });
