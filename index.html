@@ -2848,6 +2848,7 @@ input.mp-drag{filter:brightness(1.15)}
    <div id="lypan" hidden><div id="lyr"></div><div class="row"><button class="btn sm gl" id="lrcb"><svg class="i"><use href="#i-mic"/></svg> .lrc load karo</button></div></div></div>
  </div></section>
  <section class="view" id="v-eq"><h1>Equalizer</h1>
+  <p class="mut" style="margin:0 0 10px">Equalizer local files aur browser-supported online audio streams par kaam karta hai. YouTube iframe ka audio browser security ke kaaran EQ se process nahi ho sakta; kuch external streams ko server CORS support bhi chahiye.</p>
   <div class="chips scroll" id="prechips"></div>
   <div class="eqh" style="margin-top:8px"><label><input type="checkbox" id="byp"> Bypass</label><input type="text" id="eprename" placeholder="Preset name (e.g. Avi Bass)…" maxlength="30" aria-label="Custom preset name"><button class="btn sm" id="esave"><svg class="i"><use href="#i-check"/></svg> Save Preset</button><button class="btn sm gl" id="edel" hidden style="color:#ff5c93;border-color:rgba(255,92,147,.45)"><svg class="i"><use href="#i-trash"/></svg> Delete</button><button class="btn sm gl" id="ereset">Reset</button><button class="btn sm gl" id="eq-test-sig" title="Play a real-time WebAudio synth beat to test the live spectrum visualizer"><svg class="i"><use href="#i-eq"/></svg> Live Wave Test</button>
   <label class="mut" style="display:inline-flex;align-items:center;gap:8px">Preamp <input type="range" id="pamp" min="-12" max="6" step="0.5" value="0" style="width:110px"> <span id="pv">0 dB</span></label>
