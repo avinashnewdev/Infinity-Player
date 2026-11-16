@@ -46,7 +46,7 @@
 | Queue controls | Play a selected channel, continue through the imported list, use Next/Previous |
 | Recent media | Keep a lightweight history of recently played items |
 | Audio tools | Equalizer presets/custom EQ, playback speed and supported audio options |
-| Video tools | Fit/fill/stretch, zoom, subtitles and supported audio-track selection |
+| Video tools | Fit/fill/stretch, 0.1% zoom, subtitles, supported audio-track selection and an optional HDR-look SDR filter |
 | Personalization | Profiles, favorites, themes, accent colors and background options |
 | Installable web app | PWA installation where the browser and hosting environment support it |
 
@@ -97,6 +97,18 @@ Infinity Player is currently delivered as a **web app / installable PWA**. The b
 - Some network streams require authentication, special headers or DRM and may not work in this client.
 - Online playback, track switching and audio processing should be tested with the specific stream and browser.
 - YouTube embedded playback follows YouTube's own restrictions.
+
+## 🔊 IPTV audio troubleshooting
+
+- Start playback from the IPTV list, then tap **Play** once if the browser blocked audio startup.
+- Check the player volume slider and mute button; browser tab mute and operating-system output selection also affect sound.
+- HLS alternate audio choices appear only when the stream publishes separate audio renditions. A single muxed HLS stream may have no selectable alternate track.
+- Audio depends on the stream actually containing a supported audio codec. Video playback alone does not prove that the audio codec is supported.
+- The player resumes its Web Audio context from user gestures and uses a direct output route for online streams to avoid the local multi-channel DSP matrix.
+
+## Video enhancement limits
+
+The **HDR** control is an SDR picture enhancement (brightness, contrast and saturation). It does not convert SDR media into true HDR, decode HDR metadata, or create HDR output on a non-HDR display. HEVC/H.265 playback still depends on browser/OS native codec support; this repository does not bundle a complete software decoder.
 
 ## 🛣️ Roadmap
 
