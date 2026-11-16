@@ -4127,7 +4127,7 @@ let onlineHls=null,onlineYt=null,onlineYtTimer=null,onlineYtApiPromise=null;
 const currentOnlineTrack=()=>{const t=T(queue[i])||T(queue[0]);return t&&t.online?t:null};
 const isOnlineYouTube=()=>{const t=currentOnlineTrack();return !!(t&&(t.youtubeId||t.youtubeVideoId))};
 function stopOnlineAdapters(){
- if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}
+ if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}window.InfinityIPTVAudio?.clear();
  if(onlineYtTimer){clearInterval(onlineYtTimer);onlineYtTimer=null}
  if(onlineYt){try{onlineYt.destroy()}catch(e){}onlineYt=null}
  const box=document.getElementById('online-yt-frame');if(box)box.remove();
@@ -5491,12 +5491,12 @@ async function handleSubBtn(e){
   if(isOnlineYouTube()){
     if(!onlineYt){toast('YouTube player is still loading. Try CC again in a moment.');return}
     if(t&&t.youtubeCaptionOn){
-      try{onlineYt.setOption('captions','track',{languageCode:''});t.youtubeCaptionOn=false;toast('YouTube captions OFF')}
+      try{onlineYt.unloadModule('captions');t.youtubeCaptionOn=false;toast('YouTube captions OFF')}
       catch(err){toast('YouTube captions setting unavailable',4500)}
     }else{
       const lang=prompt('YouTube subtitle language code (example: en, hi):',t&&t.youtubeCaptionLanguage||'en');
       if(lang===null)return;
-      if(!lang.trim()){try{onlineYt.setOption('captions','track',{languageCode:''});if(t)t.youtubeCaptionOn=false;toast('YouTube captions OFF')}catch(err){}return}
+      if(!lang.trim()){try{onlineYt.unloadModule('captions');if(t)t.youtubeCaptionOn=false;toast('YouTube captions OFF')}catch(err){}return}
       try{onlineYt.loadModule('captions');onlineYt.setOption('captions','track',{languageCode:lang.trim().toLowerCase()});if(t){t.youtubeCaptionLanguage=lang.trim().toLowerCase();t.youtubeCaptionOn=true}toast('YouTube captions: '+lang.trim())}
       catch(err){toast('This video may not have that subtitle language.',5000)}
     }
