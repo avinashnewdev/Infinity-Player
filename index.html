@@ -5484,15 +5484,41 @@ $('#opip').onclick=e=>{e.stopPropagation();togglePiP()};
   });
   hdr.addEventListener('pointerup',()=>{drag=false});
 })();
-function handleSubBtn(e){
+async function handleSubBtn(e){
   ensureTrack();
   const t=T(queue[i])||T(queue[0]);
-  if(e.shiftKey||(!lrc.length&&!(au.textTracks&&au.textTracks.length))){
-    $('#sfi').click();
-  }else{
-    subOn=!subOn;lrcTick();syncToolStates();
-    toast(subOn?'Subtitles / Captions: ON (Nayi file ke liye double-click karo)':'Subtitles / Captions: OFF');
+  if(e&&e.shiftKey){$('#sfi').click();return}
+  if(isOnlineYouTube()){
+    if(!onlineYt){toast('YouTube player is still loading. Try CC again in a moment.');return}
+    if(t&&t.youtubeCaptionOn){
+      try{onlineYt.setOption('captions','track',{languageCode:''});t.youtubeCaptionOn=false;toast('YouTube captions OFF')}
+      catch(err){toast('YouTube captions setting unavailable',4500)}
+    }else{
+      const lang=prompt('YouTube subtitle language code (example: en, hi):',t&&t.youtubeCaptionLanguage||'en');
+      if(lang===null)return;
+      if(!lang.trim()){try{onlineYt.setOption('captions','track',{languageCode:''});if(t)t.youtubeCaptionOn=false;toast('YouTube captions OFF')}catch(err){}return}
+      try{onlineYt.loadModule('captions');onlineYt.setOption('captions','track',{languageCode:lang.trim().toLowerCase()});if(t){t.youtubeCaptionLanguage=lang.trim().toLowerCase();t.youtubeCaptionOn=true}toast('YouTube captions: '+lang.trim())}
+      catch(err){toast('This video may not have that subtitle language.',5000)}
+    }
+    syncToolStates();return;
   }
+  const hlsSubs=window.InfinityIPTVAudio?.subtitleTracks(onlineHls)||(onlineHls&&onlineHls.subtitleTracks)||[];
+  if(hlsSubs.length&&onlineHls){
+    const current=Number.isInteger(onlineHls.subtitleTrack)?onlineHls.subtitleTrack:-1;
+    const next=current>=hlsSubs.length-1?-1:current+1;
+    window.InfinityIPTVAudio?.selectSubtitle(onlineHls,next);
+    toast(next<0?'IPTV subtitles OFF':'IPTV subtitles: '+(hlsSubs[next].name||hlsSubs[next].lang||('Track '+(next+1))));
+    syncToolStates();return;
+  }
+  const nativeTracks=au.textTracks?[...au.textTracks].filter(x=>x.kind==='subtitles'||x.kind==='captions'):[];
+  if(nativeTracks.length){
+    const current=nativeTracks.findIndex(x=>x.mode==='showing'),next=current>=nativeTracks.length-1?-1:current+1;
+    nativeTracks.forEach((track,k)=>track.mode=k===next?'showing':'disabled');
+    toast(next<0?'Subtitles OFF':'Subtitles: '+(nativeTracks[next].label||nativeTracks[next].language||('Track '+(next+1))));
+    syncToolStates();return;
+  }
+  if(lrc.length){subOn=!subOn;lrcTick();syncToolStates();toast(subOn?'Subtitles / Lyrics ON':'Subtitles / Lyrics OFF');return}
+  $('#sfi').click();
 }
 $('#cc').onclick=handleSubBtn;$('#cc').ondblclick=()=>$('#sfi').click();
 $('#omute').onclick=()=>{toggleMute();ovShow()};
