@@ -18,6 +18,11 @@ try {
   Invoke-WebRequest -Uri $assetUrl -OutFile $tmp -Headers @{ "User-Agent" = "Infinity-Player-Downloader" }
   New-Item -ItemType Directory -Force -Path $Destination | Out-Null
   Expand-Archive -LiteralPath $tmp -DestinationPath $Destination -Force
+  $nested = Join-Path $Destination "Infinity-Player-main"
+  if (Test-Path $nested) {
+    Get-ChildItem -LiteralPath $nested -Force | Move-Item -Destination $Destination -Force
+    Remove-Item -LiteralPath $nested -Recurse -Force
+  }
   Write-Host "Downloaded and extracted Infinity Player to: $Destination"
   Write-Host "Open index.html through a local HTTP server (recommended: python -m http.server 8000)."
   Write-Host "This is a web/PWA source package, not a native Windows EXE."
