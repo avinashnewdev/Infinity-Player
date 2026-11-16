@@ -1809,7 +1809,9 @@ main#main{position:relative}
 }
 
 /* 5) Brightness Filter & Gesture HUD (#gesture-hud & #bright-scrim) */
-#art #vid{\n  filter:brightness(calc(var(--vbright,1)*var(--vhdr-bright,1))) contrast(calc(var(--vcontrast,1)*var(--vhdr-contrast,1))) saturate(var(--vhdr-sat,1));\n}
+#art #vid{
+  filter:brightness(calc(var(--vbright,1)*var(--vhdr-bright,1))) contrast(calc(var(--vcontrast,1)*var(--vhdr-contrast,1))) saturate(var(--vhdr-sat,1));
+}
 #bright-scrim{
   position:absolute;inset:0;z-index:2;pointer-events:none;
   background:#000;opacity:var(--vdim,0);transition:opacity .08s linear
