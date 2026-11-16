@@ -6782,13 +6782,9 @@ var menuBtn=q('#pp-menu-btn'),drawer=q('#pp-drawer'),drawerClose=q('#pp-drawer-c
 
 var timer=null,curId=null,isOpen=false,pushed=false,isScrubbing=false;
 
-/* Duplicate floating fullscreen icon removed; #fsb is the only fullscreen button. */
-var artEl=$('#art');
-if(artEl)artEl.addEventListener('click',function(e){
-  if(e.target.closest('#ov-drawer,#vstretch-panel,#csel-portal'))return;
-  var t=cur();
-  if(!artEl.classList.contains('isvid')&&t&&!t.video)open();
-});
+/* Keep the original #fsb fullscreen experience (with synced lyrics).
+   Do not open the later artwork poster when the album-art surface is clicked:
+   that created a second fullscreen layer and made exiting one reveal the other. */
 
 function cur(){try{return T(queue[i])||T(queue[0])}catch(e){return null}}
 function sync(){
