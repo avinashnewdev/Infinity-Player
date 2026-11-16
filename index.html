@@ -2924,7 +2924,7 @@ input.mp-drag{filter:brightness(1.15)}
  <div class="vlcf-grid">
   <article class="vlcf-card">
    <div class="vlcf-card-head"><div><h2>M3U / M3U8 Playlists</h2><p>Import a playlist file or a hosted playlist URL. Play any channel in the main player.</p></div></div>
-   <div class="vlcf-actions"><label class="vlcf-btn" for="vlcf-files">Import M3U / M3U8</label><input id="vlcf-files" type="file" accept=".m3u,.m3u8,.txt" hidden><button class="vlcf-btn secondary" id="vlcf-export">Export selected</button></div>
+   <div class="vlcf-actions"><label class="vlcf-btn" for="vlcf-files">Import M3U / M3U8</label><input id="vlcf-files" type="file" accept=".m3u,.m3u8,.txt" multiple hidden><button class="vlcf-btn secondary" id="vlcf-export">Export selected</button></div>
    <div class="vlcf-row"><input id="vlcf-url" type="url" placeholder="https://example.com/playlist.m3u"><button class="vlcf-btn" id="vlcf-fetch">Import URL</button></div>
    <input id="vlcf-search" class="vlcf-input" type="search" placeholder="Search playlists and channels…">
    <div id="vlcf-list" class="vlcf-list"></div><p id="vlcf-status" class="vlcf-status" role="status">Your IPTV playlists are stored in this browser.</p>
@@ -3681,6 +3681,10 @@ function buildTrackBlobUrl(t,streamIdx,opts={}){
 au.onerror=async()=>{
   if(!au.getAttribute('src'))return;
   const t=T(queue[i])||T(queue[0]);
+  if(t&&t.online){
+    toast('Online stream play nahi hua. URL, internet, server login/CORS aur browser codec support check karein. Playlist mein agla item Next se chala sakte hain.',6500);
+    return;
+  }
   if(!t||!t.video||!t.file){
     toast('Is file ko browser play nahi kar paya.',4000);
     return;
@@ -4252,7 +4256,24 @@ async function load(){
       onlineHls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>syncToolStates());
       onlineHls.on(Hls.Events.AUDIO_TRACK_SWITCHED,(_,d)=>{if(d&&d.id!=null)t.activeAudVal='hls:'+d.id});
       onlineHls.loadSource(playUrl);onlineHls.attachMedia(au);
-      onlineHls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){toast('HLS stream error: '+(d.details||d.type),5000);stopOnlineAdapters()}});
+      let hlsNetworkRecoveries=0,hlsMediaRecoveries=0;
+      onlineHls.on(Hls.Events.ERROR,(_,d)=>{
+        if(!d||!d.fatal)return;
+        if(d.type===Hls.ErrorTypes.NETWORK_ERROR&&hlsNetworkRecoveries<2){
+          hlsNetworkRecoveries++;
+          toast('IPTV network issue — reconnecting ('+hlsNetworkRecoveries+'/2)…',3500);
+          try{onlineHls.startLoad()}catch(e){}
+          return;
+        }
+        if(d.type===Hls.ErrorTypes.MEDIA_ERROR&&hlsMediaRecoveries<1){
+          hlsMediaRecoveries++;
+          toast('Recovering IPTV media decoder…',3500);
+          try{onlineHls.recoverMediaError()}catch(e){}
+          return;
+        }
+        toast('IPTV stream load nahi hua: '+(d.details||d.type)+'. URL, CORS, login ya stream availability check karein.',6000);
+        stopOnlineAdapters();
+      });
       onlineHls.on(Hls.Events.MANIFEST_PARSED,()=>{
         if(onlineHls.audioTracks&&onlineHls.audioTracks.length){const def=onlineHls.audioTracks.findIndex(x=>x.default);onlineHls.audioTrack=def>=0?def:0;syncAudioTracks(t)}
         au.play().catch(()=>{});
