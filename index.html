@@ -3347,14 +3347,30 @@ function setRemoteAudioBypass(enabled){
   const next=!!enabled;
   // Resume even when the route is already in bypass mode (e.g. after background-tab suspension).
   if(next)void ensureAudioCtx();
-  if(next===remoteAudioBypass)return;
+  // Do not trust the boolean alone: a prior disconnect/recovery can leave the
+  // MediaElementAudioSourceNode detached while this flag still says "bypass".
+  // Reassert the direct output connection every time IPTV asks for bypass.
+  if(next){
+    try{
+      src.disconnect();
+      src.connect(ctx.destination);
+      remoteAudioBypass=true;
+      void ensureAudioCtx();
+      return true;
+    }catch(e){
+      try{src.disconnect();src.connect(inNorm);remoteAudioBypass=false}catch(_){}
+      return false;
+    }
+  }
+  if(!remoteAudioBypass)return true;
   try{
     src.disconnect();
-    src.connect(next?ctx.destination:inNorm);
-    remoteAudioBypass=next;
-    if(next)void ensureAudioCtx();
+    src.connect(inNorm);
+    remoteAudioBypass=false;
+    return true;
   }catch(e){
     try{src.disconnect();src.connect(inNorm);remoteAudioBypass=false}catch(_){}
+    return false;
   }
 }
 pre.gain.value=Math.pow(10,pdb/20);wire();
