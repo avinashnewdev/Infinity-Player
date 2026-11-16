@@ -19,10 +19,10 @@ jobs:
           import re
           from pathlib import Path
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script\\b([^>]*)>([\\s\\S]*?)</script>", html, re.I)
+          scripts = re.findall(r"<script\b([^>]*)>([\s\S]*?)</script>", html, re.I)
           count = 0
           for i, (attrs, body) in enumerate(scripts):
-              if not re.search(r"\\bsrc\\s*=", attrs, re.I) and body.strip():
+              if not re.search(r"\bsrc\s*=", attrs, re.I) and body.strip():
                   Path(f"/tmp/inline-{i}.js").write_text(body, encoding="utf-8")
                   count += 1
           print(f"Extracted {count} inline scripts.")
