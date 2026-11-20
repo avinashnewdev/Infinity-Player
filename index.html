@@ -1811,7 +1811,7 @@ main#main{position:relative}
 
 /* 5) Brightness Filter & Gesture HUD (#gesture-hud & #bright-scrim) */
 #art #vid{
-  filter:brightness(calc(var(--vbright,1)*var(--vhdr-bright,1))) contrast(calc(var(--vcontrast,1)*var(--vhdr-contrast,1))) saturate(var(--vhdr-sat,1));
+  filter:brightness(var(--vbright,1)) contrast(var(--vcontrast,1));
 }
 #bright-scrim{
   position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -2731,11 +2731,11 @@ input.mp-drag{filter:brightness(1.15)}
       <div class="ovd-grid">
        <button type="button" class="ob ob-ico" id="omute" title="Mute / Unmute" aria-label="Mute"><svg class="i"><use href="#i-vol"/></svg></button>
        <select id="ospd" aria-label="Speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
-       <span id="oyq-wrap" hidden><select id="oyq" aria-label="YouTube video resolution"><option value="default">YouTube: Auto</option></select></span>
+       
        <span id="cc-slot" style="display:inline-flex"></span>
        <button type="button" class="ob ob-ico" id="ofit" title="Cycle Fit / Fill / Stretch" aria-label="Fit or Fill"><svg class="i"><use href="#i-fit"/></svg><span id="ofit-lbl" hidden>Fit</span></button>
        <button type="button" class="ob ob-ico" id="ovstretch-btn" title="Video Zoom & 4-Side Stretch" aria-label="Zoom and Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
-       <button type="button" class="ob ob-ico" id="ovhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
+       
        <button type="button" class="ob ob-ico" id="opip" title="Picture-in-Picture" aria-label="PiP"><svg class="i"><use href="#i-pip"/></svg></button>
        <span id="ofit-wrap" style="display:none"><select id="ofit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
        <span id="oaud-wrap"><select id="oaud" data-ico="vol" aria-label="Audio Track"><option value="ch:stereo" data-ico="vol">Audio: Default</option></select></span>
@@ -2794,7 +2794,7 @@ input.mp-drag{filter:brightness(1.15)}
       <button class="tbtn tbtn-ico" id="cc" aria-label="Subtitles / Captions" title="Subtitles / Captions"><svg class="i"><use href="#i-cc"/></svg></button>
       <span id="fit-wrap" style="display:none"><select id="fit-sel" aria-label="Screen Size / Aspect Ratio"><option value="fill">Size: Fill / Crop</option><option value="fit">Size: Best Fit</option><option value="stretch">Size: Stretch Full</option><option value="16:9">Aspect: 16:9</option><option value="4:3">Aspect: 4:3</option><option value="21:9">Aspect: 21:9 Cinema</option><option value="1:1">Aspect: 1:1 Square</option><option value="z115">Zoom: 115%</option><option value="z135">Zoom: 135%</option><option value="z160">Zoom: 160%</option></select></span>
       <button type="button" class="tbtn tbtn-ico" id="fit" aria-label="Cycle Fit / Fill / Stretch" title="Fit / Fill / Stretch"><svg class="i"><use href="#i-fit"/></svg><span id="fit-lbl" hidden>Fit</span></button>
-      <button type="button" class="tbtn tbtn-ico" id="vhdr" aria-label="HDR Look visual enhancement" title="HDR Look (SDR visual enhancement)">HDR</button>
+      
       <button type="button" class="tbtn tbtn-ico" id="vstretch-btn" aria-label="Video Zoom & 4-Side Stretch" title="Zoom & Stretch"><svg class="i"><use href="#i-zoom"/></svg></button>
       <button class="tbtn tbtn-ico" id="pip" aria-label="Picture in picture" title="Picture-in-Picture"><svg class="i"><use href="#i-pip"/></svg></button>
       <button class="tbtn tbtn-ico" id="fsb" aria-label="Fullscreen" title="Fullscreen"><svg class="i"><use href="#i-expand"/></svg></button>
@@ -4062,23 +4062,6 @@ function setVideoFitMode(mode,showMsg=true){
     toast('Screen Mode: '+(labels[vFitMode]||vFitMode));
   }
 }
-let hdrLook=!!S.get('hdrLook',false);
-function applyHdrLook(){
-  const v=$('#vid');
-  if(v){
-    v.style.setProperty('--vhdr-bright',hdrLook?'1.04':'1');
-    v.style.setProperty('--vhdr-contrast',hdrLook?'1.12':'1');
-    v.style.setProperty('--vhdr-sat',hdrLook?'1.2':'1');
-  }
-  ['#vhdr','#ovhdr'].forEach(sel=>{const b=$(sel);if(b){b.classList.toggle('act',hdrLook);b.setAttribute('aria-pressed',String(hdrLook))}});
-}
-function setHdrLook(enabled){
-  hdrLook=!!enabled;S.set('hdrLook',hdrLook);applyHdrLook();
-  toast(hdrLook?'HDR Look enabled (SDR visual enhancement only; no HDR decoding)':'HDR Look disabled');
-}
-$('#vhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
-$('#ovhdr')?.addEventListener('click',()=>setHdrLook(!hdrLook));
-applyHdrLook();
 
 (()=>{
   const p=$('#vstretch-panel'),a=$('#art');
@@ -4226,14 +4209,14 @@ function startOnlineYouTube(t){
  $('#art').appendChild(box);
  ensureYouTubeApi().then(()=>{
   if(T(queue[i])!==t)return;
-  const ytConfig=t.youtubeVideoId?{videoId:t.youtubeVideoId,playerVars:{autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin}}:{playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:0,playsinline:1,rel:0,origin:location.origin}};
+  const ytConfig=t.youtubeVideoId?{videoId:t.youtubeVideoId,playerVars:{autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}}:{playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}};
   onlineYt=new YT.Player(box,{width:'100%',height:'100%',...ytConfig,events:{
-   onReady:e=>{e.target.setVolume(Math.round(au.volume*100));syncYouTubeQualityControl();applyYouTubeQuality(e.target);e.target.playVideo()},
+   onReady:e=>{e.target.setVolume(Math.round(au.volume*100));e.target.playVideo()},
    onStateChange:e=>{
     const playing=e.data===YT.PlayerState.PLAYING;
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
-    if(playing){syncYouTubeQualityControl();const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist'}
+    if(playing){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist'}
     ovShow();
    }
   }});
@@ -5388,12 +5371,7 @@ try{if(/\.m3u8?$/i.test(f.name)){data[f.name.replace(/\.[^.]+$/,'')]=txt.split(/
 if(jk&&jk!=k){toast(`Yeh ${jk} playlist hai. ${jk=='video'?'Video':'Audio'} section se import karo.`,5000);return}
 let ok=0,miss=0,nw=0;Object.keys(data).forEach(n=>{if(!P[n]){P[n]=[];nw++}data[n].forEach(x=>{const m=L.find(t=>x.key&&t.key==x.key)||L.find(t=>t.title.toLowerCase()==String(x.title||'').toLowerCase());if(m){if(!P[n].includes(m.id))P[n].push(m.id);ok++}else miss++})});
 savePL(k);rl(k);rh();toast(`${nw} nayi playlist, ${ok} gaane mile${miss?`, ${miss} library mein nahi mile (pehle unki files import karo)`:''}`,6000)};
-/* ---------- Music + Video Unified Controls & Fullscreen Overlay ---------- */
-const ov=$('#ov');let ovT,sbT;let preferredYouTubeQuality='default';
-const ytQualityLabels={default:'Auto',tiny:'144p',small:'240p',medium:'360p',large:'480p',hd720:'720p',hd1080:'1080p',hd1440:'1440p',hd2160:'2160p',highres:'Highest'};
-function applyYouTubeQuality(player){const p=player||onlineYt;if(!p||typeof p.setPlaybackQuality!=='function')return;try{p.setPlaybackQuality(preferredYouTubeQuality)}catch(e){}}
-function syncYouTubeQualityControl(){const wrap=$('#oyq-wrap'),sel=$('#oyq');if(!wrap||!sel)return;const active=!!(isOnlineYouTube()&&onlineYt);wrap.hidden=!active;if(!active)return;let levels=[];try{levels=onlineYt.getAvailableQualityLevels?onlineYt.getAvailableQualityLevels():[]}catch(e){}const allowed=['tiny','small','medium','large','hd720','hd1080','hd1440','hd2160','highres'];const values=['default',...allowed.filter(q=>levels.includes(q))];const current=preferredYouTubeQuality;sel.innerHTML=values.map(q=>'<option value="'+q+'">'+(q==='default'?'Auto':ytQualityLabels[q])+'</option>').join('');sel.value=values.includes(current)?current:'default';if(!values.includes(current))preferredYouTubeQuality='default';}
-if($('#oyq'))$('#oyq').addEventListener('change',e=>{preferredYouTubeQuality=e.target.value;applyYouTubeQuality();toast('YouTube quality request: '+(ytQualityLabels[preferredYouTubeQuality]||'Auto')+'. YouTube may override this setting.',3500);ovShow()});
+/* ---------- Music + Video Unified Controls & Fullscreen Overlay ---------- */\nconst ov=$('#ov');let ovT,sbT;
 function isAnyMediaPlaying(){if(!au.paused&&!au.ended)return true;if(typeof extAu!=='undefined'&&extAu&&!extAu.paused&&!extAu.ended)return true;try{return !!(onlineYt&&onlineYt.getPlayerState&&onlineYt.getPlayerState()===1)}catch(e){return false}}
 const inFS=()=>document.fullscreenElement||document.webkitFullscreenElement||document.getElementById('art').classList.contains('pfs');
 let pfsHome=null;
