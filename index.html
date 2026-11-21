@@ -4228,9 +4228,10 @@ function startOnlineYouTube(t){
     const player=e.target,playing=e.data===YT.PlayerState.PLAYING;
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){
-     if(rep===2)player.playVideo();
-     else if(rep===1)player.playVideoAt(0);
-     else{const ids=player.getPlaylist()||onlineYtPlaylist,idx=player.getPlaylistIndex();if(ids.length&&idx>=ids.length-1)player.pauseVideo();else player.nextVideo()}
+     const idx=player.getPlaylistIndex();
+     if(rep===2){if(isPlaylist)player.playVideoAt(Number.isInteger(idx)&&idx>=0?idx:onlineYtPlaylistIndex);else player.playVideo()}
+     else if(rep===1){if(isPlaylist)player.playVideoAt(0);else player.playVideo()}
+     // Repeat OFF: the YouTube playlist player handles autoplay itself; calling nextVideo here can skip a track.
     }
     if(playing){
      try{const ids=player.getPlaylist()||[];if(ids.length)onlineYtPlaylist=ids}catch(_){}
