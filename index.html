@@ -4229,7 +4229,7 @@ function startOnlineYouTube(t){
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
     if(e.data===YT.PlayerState.ENDED){
      const idx=player.getPlaylistIndex(),ids=player.getPlaylist()||onlineYtPlaylist;
-     if(rep===2){if(isPlaylist)player.playVideoAt(Number.isInteger(idx)&&idx>=0?idx:onlineYtPlaylistIndex);else{player.seekTo(0,true);player.playVideo()}}
+     if(rep===2){if(isPlaylist){const repeatIndex=Number.isInteger(idx)&&idx>=0?idx:onlineYtPlaylistIndex;if(repeatIndex>=0)player.playVideoAt(repeatIndex);else player.playVideo()}else{player.seekTo(0,true);player.playVideo()}}
      else if(rep===1){if(isPlaylist&&ids.length&&idx>=ids.length-1)player.playVideoAt(0);else if(!isPlaylist){player.seekTo(0,true);player.playVideo()}}
      // Repeat OFF and intermediate repeat-all items: let YouTube's playlist autoplay advance.
     }
