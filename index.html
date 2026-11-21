@@ -4177,13 +4177,14 @@ function setVideoFitMode(mode,showMsg=true){
 function ensureTrack(){if(i<0&&queue.length){i=0;const t=T(queue[0]);if(t){au.src=t.url;setLrc(t);syncAudioTracks(t);upd()}}}
 function play(id,list){if(list)queue=list;i=queue.indexOf(id);if(i<0){queue.push(id);i=queue.length-1}load()}
 
-let onlineHls=null,onlineYt=null,onlineYtTimer=null,onlineYtApiPromise=null;
+let onlineHls=null,onlineYt=null,onlineYtTimer=null,onlineYtApiPromise=null,onlineYtPlaylist=[],onlineYtPlaylistIndex=-1,onlineYtTitles={};
 const currentOnlineTrack=()=>{const t=T(queue[i])||T(queue[0]);return t&&t.online?t:null};
 const isOnlineYouTube=()=>{const t=currentOnlineTrack();return !!(t&&(t.youtubeId||t.youtubeVideoId))};
 function stopOnlineAdapters(){
  if(onlineHls){try{onlineHls.destroy()}catch(e){}onlineHls=null}window.InfinityIPTVAudio?.clear();
  if(onlineYtTimer){clearInterval(onlineYtTimer);onlineYtTimer=null}
  if(onlineYt){try{onlineYt.destroy()}catch(e){}onlineYt=null}
+ onlineYtPlaylist=[];onlineYtPlaylistIndex=-1;onlineYtTitles={};
  const box=document.getElementById('online-yt-frame');if(box)box.remove();
  au.style.visibility='';
 }
@@ -4209,19 +4210,41 @@ function startOnlineYouTube(t){
  $('#art').appendChild(box);
  ensureYouTubeApi().then(()=>{
   if(T(queue[i])!==t)return;
-  const ytConfig=t.youtubeVideoId?{videoId:t.youtubeVideoId,playerVars:{autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}}:{playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}};
+  const isPlaylist=!!t.youtubeId;
+  const ytConfig=isPlaylist?{playerVars:{listType:'playlist',list:t.youtubeId,autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}}:{videoId:t.youtubeVideoId,playerVars:{autoplay:1,controls:1,playsinline:1,rel:0,cc_load_policy:0,origin:location.origin}};
   onlineYt=new YT.Player(box,{width:'100%',height:'100%',...ytConfig,events:{
-   onReady:e=>{e.target.setVolume(Math.round(au.volume*100));e.target.playVideo()},
+   onReady:e=>{
+    const player=e.target;player.setVolume(Math.round(au.volume*100));
+    if(isPlaylist){
+     try{onlineYtPlaylist=player.getPlaylist()||[]}catch(_){onlineYtPlaylist=[]}
+     onlineYtTitles={};
+     const selected=t.youtubeVideoId?onlineYtPlaylist.indexOf(t.youtubeVideoId):-1;
+     const requested=Number.isInteger(t.youtubeStartIndex)?t.youtubeStartIndex:0;
+     onlineYtPlaylistIndex=selected>=0?selected:Math.max(0,Math.min(requested,Math.max(0,onlineYtPlaylist.length-1)));
+     rq();player.playVideoAt(onlineYtPlaylistIndex);
+    }else player.playVideo();
+   },
    onStateChange:e=>{
-    const playing=e.data===YT.PlayerState.PLAYING;
+    const player=e.target,playing=e.data===YT.PlayerState.PLAYING;
     ['#ppl','#bppl','#oppl'].forEach(sel=>{const b=$(sel);if(b)b.innerHTML=I(playing?'pause':'play','fl')});
-    if(e.data===YT.PlayerState.ENDED){if(rep===2)e.target.playVideo();else if(rep===1)e.target.playVideoAt(0);else e.target.nextVideo()}
-    if(playing){const d=e.target.getVideoData&&e.target.getVideoData();if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title}$('#pbadge').textContent=t.youtubeVideoId?'YouTube · Video':'YouTube · Playlist'}
+    if(e.data===YT.PlayerState.ENDED){
+     if(rep===2)player.playVideo();
+     else if(rep===1)player.playVideoAt(0);
+     else{const ids=player.getPlaylist()||onlineYtPlaylist,idx=player.getPlaylistIndex();if(ids.length&&idx>=ids.length-1)player.pauseVideo();else player.nextVideo()}
+    }
+    if(playing){
+     try{const ids=player.getPlaylist()||[];if(ids.length)onlineYtPlaylist=ids}catch(_){}
+     const idx=player.getPlaylistIndex();if(Number.isInteger(idx)&&idx>=0)onlineYtPlaylistIndex=idx;
+     const d=player.getVideoData&&player.getVideoData();
+     if(d&&d.title){t.title=d.title;$('#ptitle').textContent=d.title;$('#mt').textContent=d.title;if(d.author)$('#partist').textContent=d.author;if(d.video_id)onlineYtTitles[d.video_id]=d.title}
+     $('#pbadge').textContent=t.youtubeId?'YouTube · Playlist':'YouTube · Video';rq();
+    }
     ovShow();
    }
   }});
   onlineYtTimer=setInterval(()=>{
    if(!onlineYt||T(queue[i])!==t)return;
+   if(t.youtubeId&&!onlineYtPlaylist.length){try{const ids=onlineYt.getPlaylist()||[];if(ids.length){onlineYtPlaylist=ids;onlineYtPlaylistIndex=onlineYt.getPlaylistIndex();rq()}}catch(_){}}
    const d=onlineYt.getDuration()||0,c=onlineYt.getCurrentTime()||0;if(d<=0)return;
    const p=c/d;
    ['tdur','odur','btd'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fm(d)});
@@ -4237,14 +4260,13 @@ window.InfinityOnlineBridge={
  add(item){
   if(!item||!/^https?:/i.test(String(item.url||'')))throw new Error('Only HTTP(S) media URLs are supported.');
   const url=String(item.url).trim();let t=tracks.find(x=>x.online&&x.url===url);
-  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,art:item.art||null,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.art=item.art||t.art||null;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null}
-  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,art:t.art||null,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
+  if(!t){const id='net_'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));t={id,title:String(item.title||'Online media').slice(0,240),artist:String(item.artist||'Online').slice(0,160),album:String(item.album||'Online').slice(0,160),url,video:!!item.video,kind:item.kind||"auto",hls:!!item.hls,art:item.art||null,youtubeId:item.youtubeId||null,youtubeVideoId:item.youtubeVideoId||null,youtubeStartIndex:Number.isInteger(item.youtubeStartIndex)?item.youtubeStartIndex:0,file:null,addedAt:Date.now(),hue:265,online:true};tracks.push(t)}else{t.video=!!item.video;t.kind=item.kind||t.kind||"auto";t.hls=!!item.hls;t.art=item.art||t.art||null;t.youtubeId=item.youtubeId||t.youtubeId||null;t.youtubeVideoId=item.youtubeVideoId||t.youtubeVideoId||null;t.youtubeStartIndex=Number.isInteger(item.youtubeStartIndex)?item.youtubeStartIndex:(t.youtubeStartIndex||0)}
+  const saved=S.get('onlineTracks',[]);const next=Array.isArray(saved)?saved.filter(x=>x.url!==url):[];next.unshift({id:t.id,title:t.title,artist:t.artist,album:t.album,url:t.url,video:t.video,kind:t.kind,hls:t.hls,art:t.art||null,youtubeId:t.youtubeId,youtubeVideoId:t.youtubeVideoId,youtubeStartIndex:t.youtubeStartIndex||0,addedAt:t.addedAt,hue:t.hue});S.set('onlineTracks',next.slice(0,500));
   try{sched()}catch(e){} return t.id;
  },
  play(item){const id=typeof item==='string'?item:this.add(item);play(id);return id},
  playPlaylist(items,startIndex=0){const ids=(items||[]).map(x=>this.add(x)).filter(Boolean);if(ids.length)play(ids[Math.max(0,Math.min(ids.length-1,Number(startIndex)||0))],ids);return ids.length},
- playYouTubePlaylist(id){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id};const tid=this.add(item);play(tid,[tid]);return tid},
- playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",art:"https://i.ytimg.com/vi/"+encodeURIComponent(id)+"/hqdefault.jpg",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
+ playYouTubePlaylist(id,videoId,startIndex=0){if(!/^[A-Za-z0-9_-]{10,80}$/.test(String(id||"")))throw Error("Invalid YouTube playlist ID.");if(videoId&&! /^[A-Za-z0-9_-]{11}$/.test(String(videoId)))throw Error("Invalid YouTube video ID.");const index=Math.max(0,Math.floor(Number(startIndex)||0));const item={url:"https://www.youtube.com/playlist?list="+encodeURIComponent(id),title:"YouTube Playlist",artist:"YouTube",album:"Online playlist",video:true,kind:"youtube",youtubeId:id,youtubeVideoId:videoId||null,youtubeStartIndex:index};const tid=this.add(item);play(tid,[tid]);return tid}, playYouTubeVideo(id){if(!/^[A-Za-z0-9_-]{11}$/.test(String(id||"")))throw Error("Invalid YouTube video ID.");const item={url:"https://www.youtube.com/watch?v="+encodeURIComponent(id),title:"YouTube Video",artist:"YouTube",album:"Online video",video:true,kind:"youtube",art:"https://i.ytimg.com/vi/"+encodeURIComponent(id)+"/hqdefault.jpg",youtubeVideoId:id};const tid=this.add(item);play(tid,[tid]);return tid},
  has(id){return !!T(id)},
 };
 async function load(){
@@ -4563,10 +4585,11 @@ function drawWave(){
 }
 /* ---------- queue ---------- */
 const thumb=t=>`<div class="th${t.video?' v':''}" style="background:${bgOf(t)}">${!t.art?I(t.video?'video':'naudio'):''}</div>`;
-function rq(){$('#queue').innerHTML=queue.map((id,k)=>{const t=T(id);return t?`<div class="tr${k==i?' cur':''}" draggable="true" data-id="${id}" data-i="${k}">${thumb(t)}<div class="mi"><b>${esc(t.title)}</b><span class="mut">${esc(t.artist||'')}</span></div><button class="ib" data-a="qup" aria-label="Upar">${I('up')}</button><button class="ib" data-a="qrm" aria-label="Remove">${I('x')}</button></div>`:''}).join('')||''}
+function rq(){const base=queue.map((id,k)=>{const t=T(id);return t?`<div class="tr${k==i?' cur':''}" draggable="true" data-id="${id}" data-i="${k}">${thumb(t)}<div class="mi"><b>${esc(t.title)}</b><span class="mut">${esc(t.artist||'')}</span></div><button class="ib" data-a="qup" aria-label="Upar">${I('up')}</button><button class="ib" data-a="qrm" aria-label="Remove">${I('x')}</button></div>`:''}).join('');const yt=onlineYt&&onlineYtPlaylist.length?`<div class="mut" style="padding:10px 6px;font-weight:700">YouTube Playlist · ${onlineYtPlaylist.length} videos</div>`+onlineYtPlaylist.map((id,k)=>{const title=onlineYtTitles[id]||(k===onlineYtPlaylistIndex&&T(queue[i])?T(queue[i]).title:'YouTube Video '+(k+1));return `<div class="tr${k===onlineYtPlaylistIndex?' cur':''}" data-yt-index="${k}" title="Play video ${k+1}"><div class="th v" style="background-image:url('https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault.jpg');background-size:cover;background-position:center"></div><div class="mi"><b>${esc(title)}</b><span class="mut">YouTube · ${k+1} / ${onlineYtPlaylist.length}</span></div></div>`}).join(''):'';$('#queue').innerHTML=base+yt||''}
 let dr=null;const qe=$('#queue');
 qe.ondragstart=e=>{dr=+e.target.closest('.tr').dataset.i};qe.ondragover=e=>e.preventDefault();
-qe.ondrop=e=>{const r=e.target.closest('.tr');if(!r||dr==null)return;const c=queue[i],[m]=queue.splice(dr,1);queue.splice(+r.dataset.i,0,m);i=queue.indexOf(c);dr=null;rq()};
+qe.ondrop=e=>{const r=e.target.closest('.tr');if(!r||r.dataset.i==null||dr==null)return;const c=queue[i],[m]=queue.splice(dr,1);queue.splice(+r.dataset.i,0,m);i=queue.indexOf(c);dr=null;rq()};
+qe.addEventListener('click',e=>{const row=e.target.closest('[data-yt-index]');if(!row||!onlineYt)return;const index=Number(row.dataset.ytIndex);if(!Number.isInteger(index)||index<0||index>=onlineYtPlaylist.length)return;onlineYtPlaylistIndex=index;onlineYt.playVideoAt(index);ovShow()});
 $('#qclear').onclick=()=>{const c=queue[i];queue=c?[c]:[];i=c?0:-1;rq()};
 $$('[data-qt]').forEach(b=>b.onclick=()=>{const l=b.dataset.qt=='l';$$('[data-qt]').forEach(x=>x.classList.toggle('on',x==b));$('#queue').hidden=l;$('#lypan').hidden=!l;$('#qclear').hidden=l})
 /* ---------- lyrics & subtitles (.lrc / .srt / .vtt) ---------- */
