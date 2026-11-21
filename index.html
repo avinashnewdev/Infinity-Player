@@ -5394,7 +5394,8 @@ try{if(/\.m3u8?$/i.test(f.name)){data[f.name.replace(/\.[^.]+$/,'')]=txt.split(/
 if(jk&&jk!=k){toast(`Yeh ${jk} playlist hai. ${jk=='video'?'Video':'Audio'} section se import karo.`,5000);return}
 let ok=0,miss=0,nw=0;Object.keys(data).forEach(n=>{if(!P[n]){P[n]=[];nw++}data[n].forEach(x=>{const m=L.find(t=>x.key&&t.key==x.key)||L.find(t=>t.title.toLowerCase()==String(x.title||'').toLowerCase());if(m){if(!P[n].includes(m.id))P[n].push(m.id);ok++}else miss++})});
 savePL(k);rl(k);rh();toast(`${nw} nayi playlist, ${ok} gaane mile${miss?`, ${miss} library mein nahi mile (pehle unki files import karo)`:''}`,6000)};
-/* ---------- Music + Video Unified Controls & Fullscreen Overlay ---------- */\nconst ov=$('#ov');let ovT,sbT;
+/* ---------- Music + Video Unified Controls & Fullscreen Overlay ---------- */
+const ov=$('#ov');let ovT,sbT;
 function isAnyMediaPlaying(){if(!au.paused&&!au.ended)return true;if(typeof extAu!=='undefined'&&extAu&&!extAu.paused&&!extAu.ended)return true;try{return !!(onlineYt&&onlineYt.getPlayerState&&onlineYt.getPlayerState()===1)}catch(e){return false}}
 const inFS=()=>document.fullscreenElement||document.webkitFullscreenElement||document.getElementById('art').classList.contains('pfs');
 let pfsHome=null;
