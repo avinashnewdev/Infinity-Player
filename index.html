@@ -4245,7 +4245,7 @@ function startOnlineYouTube(t){
   }});
   onlineYtTimer=setInterval(()=>{
    if(!onlineYt||T(queue[i])!==t)return;
-   if(t.youtubeId&&!onlineYtPlaylist.length){try{const ids=onlineYt.getPlaylist()||[];if(ids.length){onlineYtPlaylist=ids;onlineYtPlaylistIndex=onlineYt.getPlaylistIndex();rq()}}catch(_){}}
+   if(t.youtubeId&&!onlineYtPlaylist.length){try{const ids=onlineYt.getPlaylist()||[];if(ids.length){onlineYtPlaylist=ids;const selected=t.youtubeVideoId?ids.indexOf(t.youtubeVideoId):-1;const requested=Number.isInteger(t.youtubeStartIndex)?t.youtubeStartIndex:0;onlineYtPlaylistIndex=selected>=0?selected:Math.max(0,Math.min(requested,ids.length-1));onlineYt.playVideoAt(onlineYtPlaylistIndex);rq()}}catch(_){}}
    const d=onlineYt.getDuration()||0,c=onlineYt.getCurrentTime()||0;if(d<=0)return;
    const p=c/d;
    ['tdur','odur','btd'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=fm(d)});
